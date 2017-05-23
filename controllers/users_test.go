@@ -28,7 +28,7 @@ func init() {
 func TestCreateUser(t *testing.T) {
 	// Setup registration request
 	e := echo.New()
-	req, err := http.NewRequest(echo.POST, "/register", strings.NewReader(`{"username": "register_test", "display_name": "logger", "password": "password"}`))
+	req, err := http.NewRequest(echo.POST, "/api/register", strings.NewReader(`{"username": "register_test", "display_name": "logger", "password": "password"}`))
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -51,7 +51,7 @@ func TestLoginUser(t *testing.T) {
 
 	// Setup login request
 	e := echo.New()
-	req, err := http.NewRequest(echo.POST, "/login", strings.NewReader(`{"username": "login_test", "password": "password"}`))
+	req, err := http.NewRequest(echo.POST, "/api/login", strings.NewReader(`{"username": "login_test", "password": "password"}`))
 	if !assert.NoError(t, err) {
 		return
 	}

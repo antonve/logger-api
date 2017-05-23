@@ -52,7 +52,7 @@ func (logCollection *LogCollection) GetAll() error {
         SELECT
             id,
             language,
-            date,
+            to_char(date, 'YYYY-MM-DD') AS date,
             duration,
 						activity,
             notes
@@ -76,7 +76,7 @@ func (logCollection *LogCollection) Get(id uint64) (*Log, error) {
 				SELECT
 					id,
           language,
-          date,
+          to_char(date, 'YYYY-MM-DD') AS date,
           duration,
           activity,
           notes

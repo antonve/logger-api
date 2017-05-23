@@ -36,7 +36,7 @@ func TestCreateLog(t *testing.T) {
       "pages": 200
     }
   }`)
-	req, err := http.NewRequest(echo.POST, "/logs", logBody)
+	req, err := http.NewRequest(echo.POST, "/api/logs", logBody)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -58,19 +58,20 @@ func TestGetLog(t *testing.T) {
 
 	// Setup login request
 	e := echo.New()
-	req, err := http.NewRequest(echo.GET, fmt.Sprintf("%s%d", "/logs/", id), nil)
-	if !assert.NoError(t, err) {
-		return
-	}
+	req := httptest.NewRequest(echo.GET, "/", nil)
+
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
+	c.SetPath("/api/logs/:id")
+	c.SetParamNames("id")
+	c.SetParamValues(fmt.Sprintf("%d", id))
 
 	if assert.NoError(t, controllers.APILogsGetByID(c)) {
 		// Check login response
 		var body models.Log
 		assert.Equal(t, http.StatusOK, rec.Code)
-		err = json.Unmarshal(rec.Body.Bytes(), &body)
+		err := json.Unmarshal(rec.Body.Bytes(), &body)
 
 		// Check if the log has information
 		assert.Nil(t, err)
@@ -78,12 +79,11 @@ func TestGetLog(t *testing.T) {
 		assert.NotEmpty(t, body.Date)
 		assert.NotEmpty(t, body.Duration)
 		assert.NotEmpty(t, body.Activity)
-		assert.Nil(t, body.Notes)
 
 		// Check if the log has the correct information
-		assert.Equal(t, "KR", body.Language)
+		assert.Equal(t, enums.LanguageKorean, body.Language)
 		assert.Equal(t, "2016-04-05", body.Date)
-		assert.Equal(t, 60, body.Duration)
+		assert.Equal(t, uint64(60), body.Duration)
 		assert.Equal(t, enums.ActivityListening, body.Activity)
 	}
 }
