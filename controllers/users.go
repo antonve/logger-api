@@ -1,13 +1,15 @@
 package controllers
 
 import (
-	"github.com/antonve/logger-api/config"
-	"github.com/antonve/logger-api/models"
-	"github.com/antonve/logger-api/models/enums"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/antonve/logger-api/config"
+	"github.com/antonve/logger-api/models"
+	"github.com/antonve/logger-api/models/enums"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -28,12 +30,14 @@ func APIUserLogin(context echo.Context) error {
 	userCollection := models.UserCollection{Users: make([]models.User, 0)}
 	dbUser, err := userCollection.GetAuthenticationData(user.Username)
 	if err != nil {
+		log.Println(err)
 		return echo.ErrUnauthorized
 	}
 
 	// Compare passwords
 	err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(user.Password))
 	if err != nil {
+		log.Println(err)
 		return echo.ErrUnauthorized
 	}
 

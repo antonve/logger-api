@@ -1,9 +1,10 @@
 package models
 
 import (
-	"github.com/antonve/logger-api/models/enums"
 	"errors"
 	"fmt"
+
+	"github.com/antonve/logger-api/models/enums"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -98,7 +99,7 @@ func (userCollection *UserCollection) Get(id uint64) (*User, error) {
 					role
 				FROM users
 				WHERE
-					id = ?
+					id = $1
     `)
 	if err != nil {
 		return nil, err
@@ -123,7 +124,7 @@ func (userCollection *UserCollection) GetAuthenticationData(username string) (*U
 						role,
             password
         FROM users
-        WHERE username = ?
+        WHERE username = $1
     `)
 	if err != nil {
 		return nil, err
