@@ -88,7 +88,7 @@ func APIUserRegister(context echo.Context) error {
 
 	// Save to database
 	userCollection := models.UserCollection{}
-	err = userCollection.Add(user)
+	_, err = userCollection.Add(user)
 	if err != nil {
 		return Return500(context, err)
 	}

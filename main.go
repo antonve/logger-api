@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/antonve/logger-api/migrations"
 	"github.com/antonve/logger-api/utils"
 
 	"github.com/labstack/echo"
@@ -10,6 +11,8 @@ import (
 )
 
 func main() {
+	migrations.Migrate()
+
 	// Echo instance
 	e := echo.New()
 	log.Println("Starting Logger API")
@@ -19,11 +22,11 @@ func main() {
 	defer utils.SetupErrorLogging(e)()
 
 	// Serve static assets
-	utils.SetupStaticAssets(e)
+	// utils.SetupStaticAssets(e)
 
 	// Routes
 	utils.SetupRouting(e)
 
 	// Start server
-	e.Start(":3000")
+	e.Start(":7000")
 }

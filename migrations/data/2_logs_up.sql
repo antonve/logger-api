@@ -10,6 +10,7 @@ CREATE TABLE logs (
   duration bigint check (duration > 0) NOT NULL,
   activity activity NOT NULL,
   notes jsonb,
+  deleted boolean DEFAULT FALSE,
   PRIMARY KEY (id)
 );
 

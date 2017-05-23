@@ -22,13 +22,13 @@ const (
 )
 
 // Scan Activity value
-func (role *Activity) Scan(src interface{}) error {
+func (activity *Activity) Scan(src interface{}) error {
 	if src == nil {
 		return errors.New("This field cannot be NULL")
 	}
 
 	if stringActivity, ok := src.([]byte); ok {
-		*role = Activity(string(stringActivity[:]))
+		*activity = Activity(string(stringActivity[:]))
 
 		return nil
 	}
@@ -37,31 +37,31 @@ func (role *Activity) Scan(src interface{}) error {
 }
 
 // Value of Activity
-func (role Activity) Value() (driver.Value, error) {
-	return []byte(role), nil
+func (activity Activity) Value() (driver.Value, error) {
+	return []byte(activity), nil
 }
 
 // IsValid Activity Value
-func (role Activity) IsValid() bool {
-	if role == ActivityFlashcards {
+func (activity Activity) IsValid() bool {
+	if activity == ActivityFlashcards {
 		return true
 	}
-	if role == ActivityTextbook {
+	if activity == ActivityTextbook {
 		return true
 	}
-	if role == ActivityReading {
+	if activity == ActivityReading {
 		return true
 	}
-	if role == ActivityListening {
+	if activity == ActivityListening {
 		return true
 	}
-	if role == ActivityTranslation {
+	if activity == ActivityTranslation {
 		return true
 	}
-	if role == ActivityGrammar {
+	if activity == ActivityGrammar {
 		return true
 	}
-	if role == ActivityOther {
+	if activity == ActivityOther {
 		return true
 	}
 

@@ -10,8 +10,8 @@ import (
 	"github.com/labstack/echo"
 )
 
-// APILogRegister registers new log
-func APILogCreate(context echo.Context) error {
+// APILogsRegister registers new log
+func APILogsCreate(context echo.Context) error {
 	log := &models.Log{}
 
 	// Attempt to bind request to Log struct
@@ -28,7 +28,7 @@ func APILogCreate(context echo.Context) error {
 
 	// Save to database
 	logCollection := models.LogCollection{}
-	err = logCollection.Add(log)
+	_, err = logCollection.Add(log)
 	if err != nil {
 		return Return500(context, err)
 	}
@@ -36,8 +36,8 @@ func APILogCreate(context echo.Context) error {
 	return Return201(context)
 }
 
-// APILogGetAll gets all logs
-func APILogGetAll(context echo.Context) error {
+// APILogsGetAll gets all logs
+func APILogsGetAll(context echo.Context) error {
 	logCollection := models.LogCollection{Logs: make([]models.Log, 0)}
 	err := logCollection.GetAll()
 
@@ -48,8 +48,8 @@ func APILogGetAll(context echo.Context) error {
 	return context.JSON(http.StatusOK, logCollection)
 }
 
-// APILogGetByID get a single log
-func APILogGetByID(context echo.Context) error {
+// APILogsGetByID get a single log
+func APILogsGetByID(context echo.Context) error {
 	logCollection := models.LogCollection{}
 
 	id, err := strconv.ParseUint(context.Param("id"), 10, 64)
@@ -69,8 +69,8 @@ func APILogGetByID(context echo.Context) error {
 	return context.JSON(http.StatusOK, log)
 }
 
-// APILogUpdate updates a log
-func APILogUpdate(context echo.Context) error {
+// APILogsUpdate updates a log
+func APILogsUpdate(context echo.Context) error {
 	log := &models.Log{}
 
 	// Attempt to bind request to Log struct
@@ -89,6 +89,27 @@ func APILogUpdate(context echo.Context) error {
 	// Update
 	logCollection := models.LogCollection{}
 	err = logCollection.Update(log)
+	if err != nil {
+		return Return500(context, err)
+	}
+
+	return Return201(context)
+}
+
+// APILogsDelete delete a log
+func APILogsDelete(context echo.Context) error {
+	log := &models.Log{}
+
+	// Parse out id
+	fmt.Println(context.Param("id"))
+	id, err := strconv.ParseUint(context.Param("id"), 10, 64)
+	if err != nil {
+		return Return500(context, err)
+	}
+	log.ID = id
+
+	logCollection := models.LogCollection{}
+	err = logCollection.Delete(log)
 	if err != nil {
 		return Return500(context, err)
 	}

@@ -19,13 +19,13 @@ const (
 )
 
 // Scan Language value
-func (role *Language) Scan(src interface{}) error {
+func (language *Language) Scan(src interface{}) error {
 	if src == nil {
 		return errors.New("This field cannot be NULL")
 	}
 
 	if stringLanguage, ok := src.([]byte); ok {
-		*role = Language(string(stringLanguage[:]))
+		*language = Language(string(stringLanguage[:]))
 
 		return nil
 	}
@@ -34,22 +34,22 @@ func (role *Language) Scan(src interface{}) error {
 }
 
 // Value of Language
-func (role Language) Value() (driver.Value, error) {
-	return []byte(role), nil
+func (language Language) Value() (driver.Value, error) {
+	return []byte(language), nil
 }
 
 // IsValid Language Value
-func (role Language) IsValid() bool {
-	if role == LanguageJapanese {
+func (language Language) IsValid() bool {
+	if language == LanguageJapanese {
 		return true
 	}
-	if role == LanguageKorean {
+	if language == LanguageKorean {
 		return true
 	}
-	if role == LanguageMandarin {
+	if language == LanguageMandarin {
 		return true
 	}
-	if role == LanguageGerman {
+	if language == LanguageGerman {
 		return true
 	}
 

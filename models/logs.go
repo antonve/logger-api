@@ -57,6 +57,7 @@ func (logCollection *LogCollection) GetAll() error {
 						activity,
             notes
         FROM logs
+        WHERE deleted = FALSE
     `)
 
 	return err
@@ -81,7 +82,8 @@ func (logCollection *LogCollection) Get(id uint64) (*Log, error) {
           notes
 				FROM logs
 				WHERE
-					id = $1
+					id = $1 AND
+          deleted = FALSE
     `)
 	if err != nil {
 		return nil, err
@@ -92,7 +94,7 @@ func (logCollection *LogCollection) Get(id uint64) (*Log, error) {
 }
 
 // Add a log to the database
-func (logCollection *LogCollection) Add(log *Log) error {
+func (logCollection *LogCollection) Add(log *Log) (uint64, error) {
 	db := GetDatabase()
 	defer db.Close()
 
@@ -100,10 +102,20 @@ func (logCollection *LogCollection) Add(log *Log) error {
         INSERT INTO logs
         (language, date, duration, activity, notes)
         VALUES (:language, :date, :duration, :activity, :notes)
+        RETURNING id
     `
-	_, err := db.NamedExec(query, log)
+	rows, err := db.NamedQuery(query, log)
 
-	return err
+	if err != nil {
+		return 0, err
+	}
+
+	var id uint64
+	if rows.Next() {
+		rows.Scan(&id)
+	}
+
+	return id, nil
 }
 
 // Update a log
@@ -119,7 +131,9 @@ func (logCollection *LogCollection) Update(log *Log) error {
 						duration = :duration,
 						activity = :activity,
             notes = :notes
-        WHERE id = :id
+        WHERE
+            id = :id AND
+            deleted = FALSE
     `
 	result, err := db.NamedExec(query, log)
 	if err != nil {
@@ -129,6 +143,30 @@ func (logCollection *LogCollection) Update(log *Log) error {
 	rows, err := result.RowsAffected()
 	if rows == 0 {
 		err = fmt.Errorf("No log found with id %v", log.ID)
+	}
+
+	return err
+}
+
+// Delete a log
+func (logCollection *LogCollection) Delete(log *Log) error {
+	db := GetDatabase()
+	defer db.Close()
+
+	query := `
+        UPDATE logs
+        SET deleted = TRUE
+        WHERE id = :id
+        AND deleted = FALSE
+    `
+	result, err := db.NamedExec(query, log)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if rows == 0 {
+		err = fmt.Errorf("No log found with id %v or it has already been deleted", log.ID)
 	}
 
 	return err

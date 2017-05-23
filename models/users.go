@@ -136,7 +136,7 @@ func (userCollection *UserCollection) GetAuthenticationData(username string) (*U
 }
 
 // Add a user to the database
-func (userCollection *UserCollection) Add(user *User) error {
+func (userCollection *UserCollection) Add(user *User) (uint64, error) {
 	db := GetDatabase()
 	defer db.Close()
 
@@ -144,10 +144,20 @@ func (userCollection *UserCollection) Add(user *User) error {
         INSERT INTO users
         (username, display_name, password, role)
         VALUES (:username, :display_name, :password, :role)
+        RETURNING id
     `
-	_, err := db.NamedExec(query, user)
+	rows, err := db.NamedQuery(query, user)
 
-	return err
+	if err != nil {
+		return 0, err
+	}
+
+	var id uint64
+	if rows.Next() {
+		rows.Scan(&id)
+	}
+
+	return id, nil
 }
 
 // Update a user
