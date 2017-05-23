@@ -3,9 +3,9 @@ package models
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/antonve/logger-api/models/enums"
+	"github.com/jmoiron/sqlx/types"
 )
 
 // LogCollection array of logs
@@ -17,10 +17,10 @@ type LogCollection struct {
 type Log struct {
 	ID       uint64         `json:"id" db:"id"`
 	Language enums.Language `json:"language" db:"language"`
-	Date     time.Time      `json:"date" db:"date"`
-	Duration time.Duration  `json:"duration" db:"duration"`
+	Date     string         `json:"date" db:"date"`
+	Duration uint64         `json:"duration" db:"duration"`
 	Activity enums.Activity `json:"activity" db:"activity"`
-	Notes    string         `json:"notes" db:"notes"`
+	Notes    types.JSONText `json:"notes" db:"notes"`
 }
 
 // Length returns the amount of logs in the collection
@@ -30,7 +30,7 @@ func (logCollection *LogCollection) Length() int {
 
 // Validate the Log model
 func (log *Log) Validate() error {
-	if log.Date.IsZero() {
+	if log.Date == "" {
 		return errors.New("Invalid `Date` supplied.")
 	}
 	if log.Duration == 0 {
