@@ -44,7 +44,7 @@ func TestCreateLog(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	if assert.NoError(t, controllers.APILogsCreate(c)) {
+	if assert.NoError(t, controllers.APILogsPost(c)) {
 		assert.Equal(t, http.StatusCreated, rec.Code)
 		assert.Equal(t, `{"success": true}`, rec.Body.String())
 	}
@@ -56,7 +56,7 @@ func TestGetLog(t *testing.T) {
 	logCollection := models.LogCollection{}
 	id, _ := logCollection.Add(&log)
 
-	// Setup login request
+	// Setup log request
 	e := echo.New()
 	req := httptest.NewRequest(echo.GET, "/", nil)
 
@@ -68,7 +68,7 @@ func TestGetLog(t *testing.T) {
 	c.SetParamValues(fmt.Sprintf("%d", id))
 
 	if assert.NoError(t, controllers.APILogsGetByID(c)) {
-		// Check login response
+		// Check response
 		var body models.Log
 		assert.Equal(t, http.StatusOK, rec.Code)
 		err := json.Unmarshal(rec.Body.Bytes(), &body)

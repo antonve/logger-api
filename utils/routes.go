@@ -15,7 +15,7 @@ func SetupRouting(e *echo.Echo) {
 	routesLogs := routesAPI.Group("/logs")
 	// routesLogs.Use(middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtClaims{})))
 	routesLogs.GET("", echo.HandlerFunc(controllers.APILogsGetAll))
-	routesLogs.POST("", echo.HandlerFunc(controllers.APILogsCreate))
+	routesLogs.POST("", echo.HandlerFunc(controllers.APILogsPost))
 	routesLogs.GET("/:id", echo.HandlerFunc(controllers.APILogsGetByID))
 	routesLogs.PUT("/:id", echo.HandlerFunc(controllers.APILogsUpdate))
 	routesLogs.DELETE("/:id", echo.HandlerFunc(controllers.APILogsDelete))

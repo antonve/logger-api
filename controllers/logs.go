@@ -10,8 +10,8 @@ import (
 	"github.com/labstack/echo"
 )
 
-// APILogsRegister registers new log
-func APILogsCreate(context echo.Context) error {
+// APILogsPost registers new log
+func APILogsPost(context echo.Context) error {
 	log := &models.Log{}
 
 	// Attempt to bind request to Log struct
