@@ -12,6 +12,6 @@
 - Do the same for `test.yml.example`
 - Run tests
   ```
-  $ go test ./...
+  $ go test $(go list ./... | grep -v /vendor/)
   ```
 - Run migrations in `dev` `prod`: todo
