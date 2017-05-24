@@ -2,11 +2,12 @@
 
 ## Setup
 
-- Set `LOGGER_STATIC_FILES` environment variable to the `client/` path
+- Set `LOGGER_STATIC_FILES` environment variable to the `client/` path once the client is available
 - Make a copy of `dev.yml.example` and save it as dev.yml
+  - Uses PostgreSQL
   - Update `connection_string` and `database_name` eg:
     ```
-    connection_string: root:@tcp(127.0.0.1:2020)/
+    connection_string: user=anton sslmode=disable dbname=
     database: logger_dev
     ```
 - Do the same for `test.yml.example`
