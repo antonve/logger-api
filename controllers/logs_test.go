@@ -17,11 +17,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type LogsBody struct {
+	Logs []models.Log `json:"logs"`
+}
+
 func init() {
 	utils.SetupTesting()
 }
 
-func TestCreateLog(t *testing.T) {
+func TestPost(t *testing.T) {
 	// Setup create log request
 	e := echo.New()
 	logBody := strings.NewReader(`{
@@ -50,7 +54,7 @@ func TestCreateLog(t *testing.T) {
 	}
 }
 
-func TestGetLog(t *testing.T) {
+func TestGetByID(t *testing.T) {
 	// Setup log to grab
 	log := models.Log{Language: enums.LanguageKorean, Date: "2016-04-05", Duration: 60, Activity: enums.ActivityListening}
 	logCollection := models.LogCollection{}
@@ -58,7 +62,7 @@ func TestGetLog(t *testing.T) {
 
 	// Setup log request
 	e := echo.New()
-	req := httptest.NewRequest(echo.GET, "/", nil)
+	req := httptest.NewRequest(echo.GET, fmt.Sprintf("/api/logs/%d", id), nil)
 
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -85,5 +89,34 @@ func TestGetLog(t *testing.T) {
 		assert.Equal(t, "2016-04-05", body.Date)
 		assert.Equal(t, uint64(60), body.Duration)
 		assert.Equal(t, enums.ActivityListening, body.Activity)
+	}
+}
+
+func TestGetAll(t *testing.T) {
+	// Setup log to grab
+	logCollection := models.LogCollection{}
+	var ids [3]uint64
+	ids[0], _ = logCollection.Add(&models.Log{Language: enums.LanguageJapanese, Date: "2016-05-05", Duration: 30, Activity: enums.ActivityGrammar})
+	ids[1], _ = logCollection.Add(&models.Log{Language: enums.LanguageMandarin, Date: "2016-04-03", Duration: 45, Activity: enums.ActivityOther})
+	ids[2], _ = logCollection.Add(&models.Log{Language: enums.LanguageKorean, Date: "2016-04-05", Duration: 55, Activity: enums.ActivityTextbook})
+
+	// Setup log request
+	e := echo.New()
+	req := httptest.NewRequest(echo.GET, "/", nil)
+
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/api/logs")
+
+	if assert.NoError(t, controllers.APILogsGetAll(c)) {
+		// Check response
+		var body LogsBody
+		assert.Equal(t, http.StatusOK, rec.Code)
+		err := json.Unmarshal(rec.Body.Bytes(), &body)
+
+		// Check if the log has information
+		assert.Nil(t, err)
+		assert.True(t, len(body.Logs) >= 3)
 	}
 }
