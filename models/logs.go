@@ -49,16 +49,16 @@ func (logCollection *LogCollection) GetAll() error {
 	defer db.Close()
 
 	err := db.Select(&logCollection.Logs, `
-        SELECT
-            id,
-            language,
-            to_char(date, 'YYYY-MM-DD') AS date,
-            duration,
-						activity,
-            notes
-        FROM logs
-        WHERE deleted = FALSE
-    `)
+		SELECT
+			id,
+			language,
+			to_char(date, 'YYYY-MM-DD') AS date,
+			duration,
+			activity,
+			notes
+		FROM logs
+		WHERE deleted = FALSE
+	`)
 
 	return err
 }
@@ -73,18 +73,18 @@ func (logCollection *LogCollection) Get(id uint64) (*Log, error) {
 
 	// Get log
 	stmt, err := db.Preparex(`
-				SELECT
-					id,
-          language,
-          to_char(date, 'YYYY-MM-DD') AS date,
-          duration,
-          activity,
-          notes
-				FROM logs
-				WHERE
-					id = $1 AND
-          deleted = FALSE
-    `)
+		SELECT
+			id,
+			language,
+			to_char(date, 'YYYY-MM-DD') AS date,
+			duration,
+			activity,
+			notes
+		FROM logs
+		WHERE
+			id = $1 AND
+			deleted = FALSE
+	`)
 	if err != nil {
 		return nil, err
 	}
@@ -99,11 +99,10 @@ func (logCollection *LogCollection) Add(log *Log) (uint64, error) {
 	defer db.Close()
 
 	query := `
-        INSERT INTO logs
-        (language, date, duration, activity, notes)
-        VALUES (:language, :date, :duration, :activity, :notes)
-        RETURNING id
-    `
+		INSERT INTO logs (language, date, duration, activity, notes)
+		VALUES (:language, :date, :duration, :activity, :notes)
+		RETURNING id
+	`
 	rows, err := db.NamedQuery(query, log)
 
 	if err != nil {
@@ -124,17 +123,17 @@ func (logCollection *LogCollection) Update(log *Log) error {
 	defer db.Close()
 
 	query := `
-        UPDATE logs
-        SET
-            language = :language,
-						date = :date,
-						duration = :duration,
-						activity = :activity,
-            notes = :notes
-        WHERE
-            id = :id AND
-            deleted = FALSE
-    `
+		UPDATE logs
+		SET
+			language = :language,
+			date = :date,
+			duration = :duration,
+			activity = :activity,
+			notes = :notes
+		WHERE
+			id = :id AND
+			deleted = FALSE
+	`
 	result, err := db.NamedExec(query, log)
 	if err != nil {
 		return err
@@ -154,11 +153,12 @@ func (logCollection *LogCollection) Delete(log *Log) error {
 	defer db.Close()
 
 	query := `
-        UPDATE logs
-        SET deleted = TRUE
-        WHERE id = :id
-        AND deleted = FALSE
-    `
+		UPDATE logs
+		SET deleted = TRUE
+		WHERE
+			id = :id AND
+			deleted = FALSE
+	`
 	result, err := db.NamedExec(query, log)
 	if err != nil {
 		return err

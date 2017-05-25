@@ -71,13 +71,13 @@ func (userCollection *UserCollection) GetAll() error {
 	defer db.Close()
 
 	err := db.Select(&userCollection.Users, `
-        SELECT
-            id,
-            username,
-            display_name,
-						role
-        FROM users
-    `)
+		SELECT
+			id,
+			username,
+			display_name,
+			role
+		FROM users
+	`)
 
 	return err
 }
@@ -92,15 +92,15 @@ func (userCollection *UserCollection) Get(id uint64) (*User, error) {
 
 	// Get user
 	stmt, err := db.Preparex(`
-				SELECT
-					id,
-					username,
-					display_name,
-					role
-				FROM users
-				WHERE
-					id = $1
-    `)
+		SELECT
+			id,
+			username,
+			display_name,
+			role
+		FROM users
+		WHERE
+			id = $1
+	`)
 	if err != nil {
 		return nil, err
 	}
@@ -117,15 +117,15 @@ func (userCollection *UserCollection) GetAuthenticationData(username string) (*U
 	user := User{}
 
 	stmt, err := db.Preparex(`
-        SELECT
-            id,
-						username,
-            display_name,
-						role,
-            password
-        FROM users
-        WHERE username = $1
-    `)
+		SELECT
+			id,
+			username,
+			display_name,
+			role,
+			password
+		FROM users
+		WHERE username = $1
+	`)
 	if err != nil {
 		return nil, err
 	}
@@ -141,11 +141,11 @@ func (userCollection *UserCollection) Add(user *User) (uint64, error) {
 	defer db.Close()
 
 	query := `
-        INSERT INTO users
-        (username, display_name, password, role)
-        VALUES (:username, :display_name, :password, :role)
-        RETURNING id
-    `
+		INSERT INTO users
+		(username, display_name, password, role)
+		VALUES (:username, :display_name, :password, :role)
+		RETURNING id
+	`
 	rows, err := db.NamedQuery(query, user)
 
 	if err != nil {
@@ -166,13 +166,13 @@ func (userCollection *UserCollection) Update(user *User) error {
 	defer db.Close()
 
 	query := `
-        UPDATE users
-        SET
-						username = :username,
-						display_name = :display_name,
-						role = :role
-        WHERE id = :id
-    `
+		UPDATE users
+		SET
+			username = :username,
+			display_name = :display_name,
+			role = :role
+		WHERE id = :id
+	`
 	result, err := db.NamedExec(query, user)
 	if err != nil {
 		return err
