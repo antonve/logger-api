@@ -39,16 +39,16 @@ func (userCollection *UserCollection) Length() int {
 // Validate the User model
 func (user *User) Validate() error {
 	if len(user.Username) == 0 {
-		return errors.New("Invalid `Username` supplied.")
+		return errors.New("invalid `Username` supplied")
 	}
 	if len(user.DisplayName) == 0 {
-		return errors.New("Invalid `DisplayName` supplied.")
+		return errors.New("invalid `DisplayName` supplied")
 	}
 	if len(user.Role) == 0 || !user.Role.IsValid() {
-		return errors.New("Invalid `Role` supplied")
+		return errors.New("invalid `Role` supplied")
 	}
 	if user.ID == 0 && len(user.Password) == 0 {
-		return errors.New("Invalid `Password` supplied.")
+		return errors.New("invalid `Password` supplied")
 	}
 
 	return nil

@@ -31,13 +31,13 @@ func (logCollection *LogCollection) Length() int {
 // Validate the Log model
 func (log *Log) Validate() error {
 	if log.Date == "" {
-		return errors.New("Invalid `Date` supplied.")
+		return errors.New("invalid `Date` supplied")
 	}
 	if log.Duration == 0 {
-		return errors.New("Invalid `Duration` supplied.")
+		return errors.New("invalid `Duration` supplied")
 	}
 	if len(log.Activity) == 0 || !log.Activity.IsValid() {
-		return errors.New("Invalid `Activity` supplied")
+		return errors.New("invalid `Activity` supplied")
 	}
 
 	return nil
