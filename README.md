@@ -1,7 +1,11 @@
 # logger-api
 
 ## Setup
-
+- Install glide: https://github.com/Masterminds/glide
+- Install dependencies
+  ```
+  $ glide install
+  ```
 - Set `LOGGER_STATIC_FILES` environment variable to the `client/` path once the client is available
 - Make a copy of `dev.yml.example` and save it as dev.yml
   - Uses PostgreSQL
