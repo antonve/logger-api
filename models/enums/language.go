@@ -12,6 +12,7 @@ type (
 
 // Language values
 const (
+	LanguageChinese  Language = "CN"
 	LanguageJapanese Language = "JA"
 	LanguageKorean   Language = "KR"
 	LanguageMandarin Language = "ZH"
