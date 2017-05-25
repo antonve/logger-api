@@ -102,7 +102,7 @@ func TestGetAll(t *testing.T) {
 
 	// Setup log request
 	e := echo.New()
-	req := httptest.NewRequest(echo.GET, "/", nil)
+	req := httptest.NewRequest(echo.GET, "/api/logs", nil)
 
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
