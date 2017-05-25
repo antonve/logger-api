@@ -126,7 +126,7 @@ func (logCollection *LogCollection) Update(log *Log) error {
 	query := `
         UPDATE logs
         SET
-            language = :language
+            language = :language,
 						date = :date,
 						duration = :duration,
 						activity = :activity,
