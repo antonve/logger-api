@@ -120,3 +120,38 @@ func TestGetAll(t *testing.T) {
 		assert.True(t, len(body.Logs) >= 3)
 	}
 }
+
+func TestUpdate(t *testing.T) {
+	// Setup log to grab
+	logCollection := models.LogCollection{}
+	id, _ := logCollection.Add(&models.Log{Language: enums.LanguageGerman, Date: "2016-03-30", Duration: 5, Activity: enums.ActivityTranslation})
+
+	// Setup log request
+	e := echo.New()
+	logBody := strings.NewReader(`{
+    "language": "KR",
+    "date": "2017-03-30",
+    "duration": 25,
+    "activity": "GRAMMAR"
+  }`)
+	req := httptest.NewRequest(echo.PUT, fmt.Sprintf("/api/logs/%d", id), logBody)
+
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/api/logs/:id")
+	c.SetParamNames("id")
+	c.SetParamValues(fmt.Sprintf("%d", id))
+
+	if assert.NoError(t, controllers.APILogsUpdate(c)) {
+		// Check response
+		assert.Equal(t, http.StatusCreated, rec.Code)
+		assert.Equal(t, `{"success": true}`, rec.Body.String())
+
+		log, _ := logCollection.Get(id)
+		assert.Equal(t, enums.LanguageKorean, log.Language)
+		assert.Equal(t, "2017-03-30", log.Date)
+		assert.Equal(t, uint64(25), log.Duration)
+		assert.Equal(t, enums.ActivityGrammar, log.Activity)
+	}
+}
