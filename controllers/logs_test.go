@@ -12,7 +12,6 @@ import (
 	"github.com/antonve/logger-api/models"
 	"github.com/antonve/logger-api/models/enums"
 	"github.com/antonve/logger-api/utils"
-
 	"github.com/labstack/echo"
 	"github.com/stretchr/testify/assert"
 )
@@ -153,5 +152,32 @@ func TestUpdate(t *testing.T) {
 		assert.Equal(t, "2017-03-30", log.Date)
 		assert.Equal(t, uint64(25), log.Duration)
 		assert.Equal(t, enums.ActivityGrammar, log.Activity)
+	}
+}
+
+func TestDelete(t *testing.T) {
+	// Setup log to grab
+	logCollection := models.LogCollection{}
+	id, _ := logCollection.Add(&models.Log{Language: enums.LanguageJapanese, Date: "2016-01-30", Duration: 50, Activity: enums.ActivityFlashcards})
+
+	// Setup log request
+	e := echo.New()
+	req := httptest.NewRequest(echo.DELETE, fmt.Sprintf("/api/logs/%d", id), nil)
+
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/api/logs/:id")
+	c.SetParamNames("id")
+	c.SetParamValues(fmt.Sprintf("%d", id))
+
+	if assert.NoError(t, controllers.APILogsDelete(c)) {
+		// Check response
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Equal(t, `{"success": true}`, rec.Body.String())
+
+		log, e := logCollection.Get(id)
+		fmt.Println(e)
+		assert.Nil(t, log)
 	}
 }

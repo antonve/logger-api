@@ -90,6 +90,10 @@ func (logCollection *LogCollection) Get(id uint64) (*Log, error) {
 	}
 
 	stmt.Get(&log, id)
+	if log.ID == 0 {
+		return nil, fmt.Errorf("no log found with id %v", id)
+	}
+
 	return &log, nil
 }
 
@@ -141,7 +145,7 @@ func (logCollection *LogCollection) Update(log *Log) error {
 
 	rows, err := result.RowsAffected()
 	if rows == 0 {
-		err = fmt.Errorf("No log found with id %v", log.ID)
+		err = fmt.Errorf("no log found with id %v", log.ID)
 	}
 
 	return err
@@ -166,7 +170,7 @@ func (logCollection *LogCollection) Delete(log *Log) error {
 
 	rows, err := result.RowsAffected()
 	if rows == 0 {
-		err = fmt.Errorf("No log found with id %v or it has already been deleted", log.ID)
+		err = fmt.Errorf("no log found with id %v or it has already been deleted", log.ID)
 	}
 
 	return err
