@@ -153,5 +153,5 @@ func APIUserUpdate(context echo.Context) error {
 		return Return500(context, err)
 	}
 
-	return Return201(context)
+	return Return200(context)
 }
