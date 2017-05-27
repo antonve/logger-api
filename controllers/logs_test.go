@@ -145,7 +145,7 @@ func TestUpdate(t *testing.T) {
 
 	if assert.NoError(t, controllers.APILogsUpdate(c)) {
 		// Check response
-		assert.Equal(t, http.StatusCreated, rec.Code)
+		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Equal(t, `{"success": true}`, rec.Body.String())
 
 		log, _ := logCollection.Get(id)
