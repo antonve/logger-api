@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/antonve/logger-api/models"
+	"github.com/antonve/logger-api/models/enums"
 	jwt "github.com/dgrijalva/jwt-go"
 
 	"github.com/labstack/echo"
@@ -56,6 +57,7 @@ func APILogsGetAll(context echo.Context) error {
 	date := context.QueryParam("date")
 	from := context.QueryParam("from")
 	until := context.QueryParam("until")
+	language := context.QueryParam("language")
 
 	// Filter by date
 	if date != "" {
@@ -74,6 +76,10 @@ func APILogsGetAll(context echo.Context) error {
 
 	if err != nil {
 		return ServeWithError(context, 500, err)
+	}
+
+	if language != "" {
+		logCollection.ByLanguage(enums.Language(language))
 	}
 
 	return context.JSON(http.StatusOK, logCollection)
