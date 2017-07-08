@@ -16,7 +16,7 @@ type LogCollection struct {
 // Log model
 type Log struct {
 	ID       uint64         `json:"id" db:"id"`
-	UserID   uint64         `json:"user_id" db:"id"`
+	UserID   uint64         `json:"user_id" db:"user_id"`
 	Language enums.Language `json:"language" db:"language"`
 	Date     string         `json:"date" db:"date"`
 	Duration uint64         `json:"duration" db:"duration"`
@@ -73,7 +73,7 @@ func (logCollection *LogCollection) GetAllFromUser(userID uint64) error {
 	db := GetDatabase()
 	defer db.Close()
 
-	stmt, err := db.Preparex(`
+	err := db.Select(&logCollection.Logs, `
 		SELECT
 			id,
 			user_id,
@@ -83,15 +83,10 @@ func (logCollection *LogCollection) GetAllFromUser(userID uint64) error {
 			activity,
 			notes
 		FROM logs
-    WHERE
-      user_id = $1 AND
+		WHERE
+			user_id = $1 AND
 		  deleted = FALSE
-	`)
-	if err != nil {
-		return err
-	}
-
-	err = stmt.Get(&logCollection.Logs, userID)
+	`, userID)
 
 	return err
 }
