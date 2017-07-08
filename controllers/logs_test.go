@@ -8,11 +8,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/antonve/logger-api/config"
 	"github.com/antonve/logger-api/controllers"
 	"github.com/antonve/logger-api/models"
 	"github.com/antonve/logger-api/models/enums"
 	"github.com/antonve/logger-api/utils"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -48,10 +50,11 @@ func TestPost(t *testing.T) {
 		return
 	}
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	if assert.NoError(t, controllers.APILogsPost(c)) {
+	if assert.NoError(t, middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtClaims{}))(controllers.APILogsPost)(c)) {
 		assert.Equal(t, http.StatusCreated, rec.Code)
 		assert.Equal(t, `{"success": true}`, rec.Body.String())
 	}
@@ -59,7 +62,7 @@ func TestPost(t *testing.T) {
 
 func TestGetByID(t *testing.T) {
 	// Setup log to grab
-	log := models.Log{Language: enums.LanguageKorean, Date: "2016-04-05", Duration: 60, Activity: enums.ActivityListening}
+	log := models.Log{UserID: mockUser.ID, Language: enums.LanguageKorean, Date: "2016-04-05", Duration: 60, Activity: enums.ActivityListening}
 	logCollection := models.LogCollection{}
 	id, _ := logCollection.Add(&log)
 
@@ -75,7 +78,7 @@ func TestGetByID(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues(fmt.Sprintf("%d", id))
 
-	if assert.NoError(t, controllers.APILogsGetByID(c)) {
+	if assert.NoError(t, middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtClaims{}))(controllers.APILogsGetByID)(c)) {
 		// Check response
 		var body models.Log
 		assert.Equal(t, http.StatusOK, rec.Code)
@@ -100,9 +103,9 @@ func TestGetAll(t *testing.T) {
 	// Setup log to grab
 	logCollection := models.LogCollection{}
 	var ids [3]uint64
-	ids[0], _ = logCollection.Add(&models.Log{Language: enums.LanguageJapanese, Date: "2016-05-05", Duration: 30, Activity: enums.ActivityGrammar})
-	ids[1], _ = logCollection.Add(&models.Log{Language: enums.LanguageMandarin, Date: "2016-04-03", Duration: 45, Activity: enums.ActivityOther})
-	ids[2], _ = logCollection.Add(&models.Log{Language: enums.LanguageKorean, Date: "2016-04-05", Duration: 55, Activity: enums.ActivityTextbook})
+	ids[0], _ = logCollection.Add(&models.Log{UserID: mockUser.ID, Language: enums.LanguageJapanese, Date: "2016-05-05", Duration: 30, Activity: enums.ActivityGrammar})
+	ids[1], _ = logCollection.Add(&models.Log{UserID: mockUser.ID, Language: enums.LanguageMandarin, Date: "2016-04-03", Duration: 45, Activity: enums.ActivityOther})
+	ids[2], _ = logCollection.Add(&models.Log{UserID: mockUser.ID, Language: enums.LanguageKorean, Date: "2016-04-05", Duration: 55, Activity: enums.ActivityTextbook})
 
 	// Setup log request
 	e := echo.New()
@@ -114,7 +117,7 @@ func TestGetAll(t *testing.T) {
 	c := e.NewContext(req, rec)
 	c.SetPath("/api/logs")
 
-	if assert.NoError(t, controllers.APILogsGetAll(c)) {
+	if assert.NoError(t, middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtClaims{}))(controllers.APILogsGetAll)(c)) {
 		// Check response
 		var body LogsBody
 		assert.Equal(t, http.StatusOK, rec.Code)
@@ -129,7 +132,7 @@ func TestGetAll(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	// Setup log to grab
 	logCollection := models.LogCollection{}
-	id, _ := logCollection.Add(&models.Log{Language: enums.LanguageGerman, Date: "2016-03-30", Duration: 5, Activity: enums.ActivityTranslation})
+	id, _ := logCollection.Add(&models.Log{UserID: mockUser.ID, Language: enums.LanguageGerman, Date: "2016-03-30", Duration: 5, Activity: enums.ActivityTranslation})
 
 	// Setup log request
 	e := echo.New()
@@ -149,7 +152,7 @@ func TestUpdate(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues(fmt.Sprintf("%d", id))
 
-	if assert.NoError(t, controllers.APILogsUpdate(c)) {
+	if assert.NoError(t, middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtClaims{}))(controllers.APILogsUpdate)(c)) {
 		// Check response
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Equal(t, `{"success": true}`, rec.Body.String())
@@ -165,7 +168,7 @@ func TestUpdate(t *testing.T) {
 func TestDelete(t *testing.T) {
 	// Setup log to grab
 	logCollection := models.LogCollection{}
-	id, _ := logCollection.Add(&models.Log{Language: enums.LanguageJapanese, Date: "2016-01-30", Duration: 50, Activity: enums.ActivityFlashcards})
+	id, _ := logCollection.Add(&models.Log{UserID: mockUser.ID, Language: enums.LanguageJapanese, Date: "2016-01-30", Duration: 50, Activity: enums.ActivityFlashcards})
 
 	// Setup log request
 	e := echo.New()
@@ -179,7 +182,7 @@ func TestDelete(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues(fmt.Sprintf("%d", id))
 
-	if assert.NoError(t, controllers.APILogsDelete(c)) {
+	if assert.NoError(t, middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtClaims{}))(controllers.APILogsDelete)(c)) {
 		// Check response
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Equal(t, `{"success": true}`, rec.Body.String())
