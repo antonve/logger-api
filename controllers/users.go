@@ -23,7 +23,7 @@ func APIUserLogin(context echo.Context) error {
 	user := &models.User{}
 	err := context.Bind(user)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
 	// Get authentication data
@@ -56,7 +56,7 @@ func APIUserLogin(context echo.Context) error {
 	// Generate encoded token and send it as response.
 	encodedToken, err := token.SignedString([]byte(config.GetConfig().JWTKey))
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
 	return context.JSON(http.StatusOK, map[string]interface{}{
@@ -72,7 +72,7 @@ func APIUserRegister(context echo.Context) error {
 	// Attempt to bind request to User struct
 	err := context.Bind(user)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
 	user.HashPassword()
@@ -83,17 +83,17 @@ func APIUserRegister(context echo.Context) error {
 	// Validate request
 	err = user.Validate()
 	if err != nil {
-		return Return400(context, err)
+		return ServeWithError(context, 400, err)
 	}
 
 	// Save to database
 	userCollection := models.UserCollection{}
 	_, err = userCollection.Add(user)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
-	return Return201(context)
+	return Serve(context, 201)
 }
 
 // APIUserGetAll gets all users
@@ -102,7 +102,7 @@ func APIUserGetAll(context echo.Context) error {
 	err := userCollection.GetAll()
 
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
 	return context.JSON(http.StatusOK, userCollection)
@@ -114,16 +114,16 @@ func APIUserGetByID(context echo.Context) error {
 
 	id, err := strconv.ParseUint(context.Param("id"), 10, 64)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
 	user, err := userCollection.Get(id)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
 	if user == nil {
-		return Return404(context, fmt.Errorf("No User found with id %v", id))
+		return ServeWithError(context, 404, fmt.Errorf("No User found with id %v", id))
 	}
 
 	return context.JSON(http.StatusOK, user)
@@ -136,13 +136,13 @@ func APIUserUpdate(context echo.Context) error {
 	// Attempt to bind request to User struct
 	err := context.Bind(user)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
 	// Parse out id
 	id, err := strconv.ParseUint(context.Param("id"), 10, 64)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 	user.ID = id
 
@@ -150,8 +150,8 @@ func APIUserUpdate(context echo.Context) error {
 	userCollection := models.UserCollection{}
 	err = userCollection.Update(user)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
-	return Return200(context)
+	return Serve(context, 200)
 }

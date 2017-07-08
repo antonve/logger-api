@@ -18,29 +18,29 @@ func APILogsPost(context echo.Context) error {
 	// Attempt to bind request to Log struct
 	err := context.Bind(log)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
 	user := getUser(context)
 	if user == nil {
-		return Return500(context, fmt.Errorf("could not receive user"))
+		return ServeWithError(context, 500, fmt.Errorf("could not receive user"))
 	}
 	log.UserID = user.ID
 
 	// Validate request
 	err = log.Validate()
 	if err != nil {
-		return Return400(context, err)
+		return ServeWithError(context, 400, err)
 	}
 
 	// Save to database
 	logCollection := models.LogCollection{}
 	_, err = logCollection.Add(log)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
-	return Return201(context)
+	return Serve(context, 201)
 }
 
 // APILogsGetAll gets all logs
@@ -48,13 +48,13 @@ func APILogsGetAll(context echo.Context) error {
 	logCollection := models.LogCollection{Logs: make([]models.Log, 0)}
 	user := getUser(context)
 	if user == nil {
-		return Return500(context, fmt.Errorf("could not receive user"))
+		return ServeWithError(context, 500, fmt.Errorf("could not receive user"))
 	}
 
 	err := logCollection.GetAllFromUser(user.ID)
 
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
 	return context.JSON(http.StatusOK, logCollection)
@@ -66,21 +66,21 @@ func APILogsGetByID(context echo.Context) error {
 
 	id, err := strconv.ParseUint(context.Param("id"), 10, 64)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
 	log, err := logCollection.Get(id)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
 	if log == nil {
-		return Return404(context, fmt.Errorf("no log found with id %v", id))
+		return ServeWithError(context, 404, fmt.Errorf("no log found with id %v", id))
 	}
 
 	user := context.Get("user").(*jwt.Token).Claims.(*models.JwtClaims).User
 	if !log.IsOwner(user.ID) {
-		return Return403(context, fmt.Errorf("log doesn't belong to user"))
+		return ServeWithError(context, 403, fmt.Errorf("log doesn't belong to user"))
 	}
 
 	return context.JSON(http.StatusOK, log)
@@ -93,29 +93,29 @@ func APILogsUpdate(context echo.Context) error {
 	// Attempt to bind request to Log struct
 	err := context.Bind(log)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
 	// Parse out id
 	id, err := strconv.ParseUint(context.Param("id"), 10, 64)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
 	// Update
 	logCollection := models.LogCollection{}
 	currentLog, err := logCollection.Get(id)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
 	user := getUser(context)
 	if user == nil {
-		return Return500(context, fmt.Errorf("could not receive user"))
+		return ServeWithError(context, 500, fmt.Errorf("could not receive user"))
 	}
 
 	if !currentLog.IsOwner(user.ID) {
-		return Return403(context, fmt.Errorf("log doesn't belong to user"))
+		return ServeWithError(context, 403, fmt.Errorf("log doesn't belong to user"))
 	}
 
 	log.ID = currentLog.ID
@@ -123,10 +123,10 @@ func APILogsUpdate(context echo.Context) error {
 
 	err = logCollection.Update(log)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
-	return Return200(context)
+	return Serve(context, 200)
 }
 
 // APILogsDelete delete a log
@@ -137,29 +137,29 @@ func APILogsDelete(context echo.Context) error {
 	fmt.Println(context.Param("id"))
 	id, err := strconv.ParseUint(context.Param("id"), 10, 64)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 	log.ID = id
 
 	logCollection := models.LogCollection{}
 	currentLog, err := logCollection.Get(id)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
 	user := getUser(context)
 	if user == nil {
-		return Return500(context, fmt.Errorf("could not receive user"))
+		return ServeWithError(context, 500, fmt.Errorf("could not receive user"))
 	}
 
 	if !currentLog.IsOwner(user.ID) {
-		return Return403(context, fmt.Errorf("log doesn't belong to user"))
+		return ServeWithError(context, 403, fmt.Errorf("log doesn't belong to user"))
 	}
 
 	err = logCollection.Delete(log)
 	if err != nil {
-		return Return500(context, err)
+		return ServeWithError(context, 500, err)
 	}
 
-	return Return200(context)
+	return Serve(context, 200)
 }
