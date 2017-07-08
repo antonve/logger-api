@@ -40,7 +40,11 @@ func APILogsPost(context echo.Context) error {
 // APILogsGetAll gets all logs
 func APILogsGetAll(context echo.Context) error {
 	logCollection := models.LogCollection{Logs: make([]models.Log, 0)}
-	user := context.Get("user").(*jwt.Token).Claims.(*models.JwtClaims).User
+	user := getUser(context)
+	if user == nil {
+		return Return500(context, fmt.Errorf("could not receive user"))
+	}
+
 	err := logCollection.GetAllFromUser(user.ID)
 
 	if err != nil {
@@ -99,7 +103,11 @@ func APILogsUpdate(context echo.Context) error {
 		return Return500(context, err)
 	}
 
-	user := context.Get("user").(*jwt.Token).Claims.(*models.JwtClaims).User
+	user := getUser(context)
+	if user == nil {
+		return Return500(context, fmt.Errorf("could not receive user"))
+	}
+
 	if !currentLog.IsOwner(user.ID) {
 		return Return403(context, fmt.Errorf("log entry doesn't belong to user"))
 	}
@@ -130,7 +138,11 @@ func APILogsDelete(context echo.Context) error {
 		return Return500(context, err)
 	}
 
-	user := context.Get("user").(*jwt.Token).Claims.(*models.JwtClaims).User
+	user := getUser(context)
+	if user == nil {
+		return Return500(context, fmt.Errorf("could not receive user"))
+	}
+
 	if !currentLog.IsOwner(user.ID) {
 		return Return403(context, fmt.Errorf("log entry doesn't belong to user"))
 	}
