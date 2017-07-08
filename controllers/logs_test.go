@@ -20,8 +20,12 @@ type LogsBody struct {
 	Logs []models.Log `json:"logs"`
 }
 
+var mockJwtToken string
+var mockUser *models.User
+
 func init() {
 	utils.SetupTesting()
+	mockJwtToken, mockUser = utils.SetupTestUser()
 }
 
 func TestPost(t *testing.T) {
@@ -64,6 +68,7 @@ func TestGetByID(t *testing.T) {
 	req := httptest.NewRequest(echo.GET, fmt.Sprintf("/api/logs/%d", id), nil)
 
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetPath("/api/logs/:id")
@@ -104,6 +109,7 @@ func TestGetAll(t *testing.T) {
 	req := httptest.NewRequest(echo.GET, "/api/logs", nil)
 
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetPath("/api/logs")
@@ -136,6 +142,7 @@ func TestUpdate(t *testing.T) {
 	req := httptest.NewRequest(echo.PUT, fmt.Sprintf("/api/logs/%d", id), logBody)
 
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetPath("/api/logs/:id")
@@ -165,6 +172,7 @@ func TestDelete(t *testing.T) {
 	req := httptest.NewRequest(echo.DELETE, fmt.Sprintf("/api/logs/%d", id), nil)
 
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetPath("/api/logs/:id")
