@@ -115,7 +115,7 @@ func APILogsUpdate(context echo.Context) error {
 	}
 
 	if !currentLog.IsOwner(user.ID) {
-		return Return403(context, fmt.Errorf("log entry doesn't belong to user"))
+		return Return403(context, fmt.Errorf("log doesn't belong to user"))
 	}
 
 	err = logCollection.Update(log)
@@ -150,7 +150,7 @@ func APILogsDelete(context echo.Context) error {
 	}
 
 	if !currentLog.IsOwner(user.ID) {
-		return Return403(context, fmt.Errorf("log entry doesn't belong to user"))
+		return Return403(context, fmt.Errorf("log doesn't belong to user"))
 	}
 
 	err = logCollection.Delete(log)
