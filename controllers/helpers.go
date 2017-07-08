@@ -2,9 +2,10 @@ package controllers
 
 import (
 	"log"
+	"net/http"
+
 	"github.com/antonve/logger-api/config"
 	"github.com/antonve/logger-api/models"
-	"net/http"
 
 	"runtime/debug"
 
@@ -31,6 +32,17 @@ func Return400(context echo.Context, err error) error {
 // Serve400 helper
 func Serve400(context echo.Context) error {
 	return context.JSONBlob(http.StatusBadRequest, []byte(`{"success": false, "errorCode": 400, "errorMessage": "400 bad request"}`))
+}
+
+// Return403 helper
+func Return403(context echo.Context, err error) error {
+	handleError(err)
+	return Serve403(context)
+}
+
+// Serve403 helper
+func Serve403(context echo.Context) error {
+	return context.JSONBlob(http.StatusForbidden, []byte(`{"success": false, "errorCode": 403, "errorMessage": "400 forbidden"}`))
 }
 
 // Return404 helper
