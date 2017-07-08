@@ -47,6 +47,19 @@ func (log *Log) Validate() error {
 	return nil
 }
 
+// ByLanguage only keeps the logs for a certain language
+func (logCollection *LogCollection) ByLanguage(language enums.Language) {
+	filteredLogs := make([]Log, 0)
+
+	for _, log := range logCollection.Logs {
+		if log.Language == language {
+			filteredLogs = append(filteredLogs, log)
+		}
+	}
+
+	logCollection.Logs = filteredLogs
+}
+
 // GetAll returns all logs
 func (logCollection *LogCollection) GetAll() error {
 	db := GetDatabase()

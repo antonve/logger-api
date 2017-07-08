@@ -169,6 +169,28 @@ func TestGetAll(t *testing.T) {
 		assert.Nil(t, err)
 		assert.True(t, len(body.Logs) == 2)
 	}
+
+	// By language
+	req = httptest.NewRequest(echo.GET, "/api/logs?language=JA", nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
+
+	rec = httptest.NewRecorder()
+	c = e.NewContext(req, rec)
+	c.SetPath("/api/logs")
+
+	if assert.NoError(t, middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtClaims{}))(controllers.APILogsGetAll)(c)) {
+		// Check response
+		var body LogsBody
+		assert.Equal(t, http.StatusOK, rec.Code)
+		err := json.Unmarshal(rec.Body.Bytes(), &body)
+
+		// Check if the log has information
+		assert.Nil(t, err)
+		for _, log := range body.Logs {
+			assert.True(t, log.Language == enums.LanguageJapanese)
+		}
+	}
 }
 
 func TestUpdate(t *testing.T) {
