@@ -69,12 +69,9 @@ func (logCollection *LogCollection) GetAll() error {
 }
 
 // GetAllFromUser returns all logs from a certain user
-func (logCollection *LogCollection) GetAllFromUser(userID uint64) (*Log, error) {
+func (logCollection *LogCollection) GetAllFromUser(userID uint64) error {
 	db := GetDatabase()
 	defer db.Close()
-
-	// Init log
-	log := Log{}
 
 	stmt, err := db.Preparex(`
 		SELECT
@@ -91,15 +88,12 @@ func (logCollection *LogCollection) GetAllFromUser(userID uint64) (*Log, error) 
 		  deleted = FALSE
 	`)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	stmt.Get(&log, userID)
-	if log.ID == 0 {
-		return nil, fmt.Errorf("no log found with user id %v", userID)
-	}
+	err = stmt.Get(&logCollection.Logs, userID)
 
-	return &log, nil
+	return err
 }
 
 // Get a log by id
@@ -215,4 +209,13 @@ func (logCollection *LogCollection) Delete(log *Log) error {
 	}
 
 	return err
+}
+
+// IsOwner checks the owner
+func (log *Log) IsOwner(userID uint64) bool {
+	if log.UserID == userID {
+		return true
+	}
+
+	return false
 }
