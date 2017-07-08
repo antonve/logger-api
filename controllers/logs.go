@@ -46,12 +46,31 @@ func APILogsPost(context echo.Context) error {
 // APILogsGetAll gets all logs
 func APILogsGetAll(context echo.Context) error {
 	logCollection := models.LogCollection{Logs: make([]models.Log, 0)}
+	var err error = nil
 	user := getUser(context)
 	if user == nil {
 		return ServeWithError(context, 500, fmt.Errorf("could not receive user"))
 	}
 
-	err := logCollection.GetAllFromUser(user.ID)
+	// Filters
+	date := context.QueryParam("date")
+	from := context.QueryParam("from")
+	until := context.QueryParam("until")
+
+	// Filter by date
+	if date != "" {
+		err = logCollection.GetAllFromUserByDate(user.ID, date)
+	}
+
+	// Only handle date ranges when no date is specified
+	if date == "" && from != "" && until != "" {
+		err = logCollection.GetAllFromUserByDateRange(user.ID, from, until)
+	}
+
+	// Handle no filters
+	if date == "" && (from == "" || until == "") {
+		err = logCollection.GetAllFromUser(user.ID)
+	}
 
 	if err != nil {
 		return ServeWithError(context, 500, err)

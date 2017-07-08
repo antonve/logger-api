@@ -91,6 +91,36 @@ func (logCollection *LogCollection) GetAllFromUser(userID uint64) error {
 	return err
 }
 
+// GetAllFromUserByDate returns all logs from a certain user on a certain date
+func (logCollection *LogCollection) GetAllFromUserByDate(userID uint64, date string) error {
+	return logCollection.GetAllFromUserByDateRange(userID, date, date)
+}
+
+// GetAllFromUserByDateRange returns all logs from a certain user in a certain date range
+func (logCollection *LogCollection) GetAllFromUserByDateRange(userID uint64, dateStart string, dateEnd string) error {
+	db := GetDatabase()
+	defer db.Close()
+
+	err := db.Select(&logCollection.Logs, `
+		SELECT
+			id,
+			user_id,
+			language,
+			to_char(date, 'YYYY-MM-DD') AS date,
+			duration,
+			activity,
+			notes
+		FROM logs
+		WHERE
+			user_id = $1 AND
+			date >= $2 AND
+			date <= $3 AND
+		  deleted = FALSE
+	`, userID, dateStart, dateEnd)
+
+	return err
+}
+
 // Get a log by id
 func (logCollection *LogCollection) Get(id uint64) (*Log, error) {
 	db := GetDatabase()
