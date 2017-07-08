@@ -78,7 +78,7 @@ func APIUserRegister(context echo.Context) error {
 	user.HashPassword()
 
 	// Set default role
-	user.Role = enums.RoleStaff
+	user.Role = enums.RoleUser
 
 	// Validate request
 	err = user.Validate()

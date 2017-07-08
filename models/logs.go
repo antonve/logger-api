@@ -16,6 +16,7 @@ type LogCollection struct {
 // Log model
 type Log struct {
 	ID       uint64         `json:"id" db:"id"`
+	UserID   uint64         `json:"user_id" db:"user_id"`
 	Language enums.Language `json:"language" db:"language"`
 	Date     string         `json:"date" db:"date"`
 	Duration uint64         `json:"duration" db:"duration"`
@@ -30,6 +31,9 @@ func (logCollection *LogCollection) Length() int {
 
 // Validate the Log model
 func (log *Log) Validate() error {
+	if log.UserID == 0 {
+		return errors.New("invalid `UserID` supplied")
+	}
 	if log.Date == "" {
 		return errors.New("invalid `Date` supplied")
 	}
@@ -51,6 +55,7 @@ func (logCollection *LogCollection) GetAll() error {
 	err := db.Select(&logCollection.Logs, `
 		SELECT
 			id,
+			user_id,
 			language,
 			to_char(date, 'YYYY-MM-DD') AS date,
 			duration,
@@ -59,6 +64,29 @@ func (logCollection *LogCollection) GetAll() error {
 		FROM logs
 		WHERE deleted = FALSE
 	`)
+
+	return err
+}
+
+// GetAllFromUser returns all logs from a certain user
+func (logCollection *LogCollection) GetAllFromUser(userID uint64) error {
+	db := GetDatabase()
+	defer db.Close()
+
+	err := db.Select(&logCollection.Logs, `
+		SELECT
+			id,
+			user_id,
+			language,
+			to_char(date, 'YYYY-MM-DD') AS date,
+			duration,
+			activity,
+			notes
+		FROM logs
+		WHERE
+			user_id = $1 AND
+		  deleted = FALSE
+	`, userID)
 
 	return err
 }
@@ -75,6 +103,7 @@ func (logCollection *LogCollection) Get(id uint64) (*Log, error) {
 	stmt, err := db.Preparex(`
 		SELECT
 			id,
+			user_id,
 			language,
 			to_char(date, 'YYYY-MM-DD') AS date,
 			duration,
@@ -103,8 +132,8 @@ func (logCollection *LogCollection) Add(log *Log) (uint64, error) {
 	defer db.Close()
 
 	query := `
-		INSERT INTO logs (language, date, duration, activity, notes)
-		VALUES (:language, :date, :duration, :activity, :notes)
+		INSERT INTO logs (user_id, language, date, duration, activity, notes)
+		VALUES (:user_id, :language, :date, :duration, :activity, :notes)
 		RETURNING id
 	`
 	rows, err := db.NamedQuery(query, log)
@@ -136,6 +165,7 @@ func (logCollection *LogCollection) Update(log *Log) error {
 			notes = :notes
 		WHERE
 			id = :id AND
+			user_id = :user_id AND
 			deleted = FALSE
 	`
 	result, err := db.NamedExec(query, log)
@@ -145,7 +175,7 @@ func (logCollection *LogCollection) Update(log *Log) error {
 
 	rows, err := result.RowsAffected()
 	if rows == 0 {
-		err = fmt.Errorf("no log found with id %v", log.ID)
+		err = fmt.Errorf("no log found with id %d for user %d", log.ID, log.UserID)
 	}
 
 	return err
@@ -174,4 +204,13 @@ func (logCollection *LogCollection) Delete(log *Log) error {
 	}
 
 	return err
+}
+
+// IsOwner checks the owner
+func (log *Log) IsOwner(userID uint64) bool {
+	if log.UserID == userID {
+		return true
+	}
+
+	return false
 }

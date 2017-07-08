@@ -13,8 +13,7 @@ type (
 // Role values
 const (
 	RoleAdmin    Role = "ADMIN"
-	RoleMod      Role = "MOD"
-	RoleStaff    Role = "STAFF"
+	RoleUser     Role = "USER"
 	RoleDisabled Role = "DISABLED"
 )
 
@@ -43,10 +42,7 @@ func (role Role) IsValid() bool {
 	if role == RoleAdmin {
 		return true
 	}
-	if role == RoleMod {
-		return true
-	}
-	if role == RoleStaff {
+	if role == RoleUser {
 		return true
 	}
 	if role == RoleDisabled {

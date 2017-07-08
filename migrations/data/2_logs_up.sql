@@ -5,6 +5,7 @@ CREATE TYPE language AS ENUM ('JA','KR','ZH','DE');
 
 CREATE TABLE logs (
   id bigint check (id > 0) NOT NULL DEFAULT NEXTVAL ('logs_seq'),
+  user_id bigint NOT NULL,
   language language NOT NULL,
   date date NOT NULL,
   duration bigint check (duration > 0) NOT NULL,

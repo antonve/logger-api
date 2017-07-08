@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/antonve/logger-api/models"
+	jwt "github.com/dgrijalva/jwt-go"
 
 	"github.com/labstack/echo"
 )
@@ -19,6 +20,12 @@ func APILogsPost(context echo.Context) error {
 	if err != nil {
 		return Return500(context, err)
 	}
+
+	user := getUser(context)
+	if user == nil {
+		return Return500(context, fmt.Errorf("could not receive user"))
+	}
+	log.UserID = user.ID
 
 	// Validate request
 	err = log.Validate()
@@ -39,7 +46,12 @@ func APILogsPost(context echo.Context) error {
 // APILogsGetAll gets all logs
 func APILogsGetAll(context echo.Context) error {
 	logCollection := models.LogCollection{Logs: make([]models.Log, 0)}
-	err := logCollection.GetAll()
+	user := getUser(context)
+	if user == nil {
+		return Return500(context, fmt.Errorf("could not receive user"))
+	}
+
+	err := logCollection.GetAllFromUser(user.ID)
 
 	if err != nil {
 		return Return500(context, err)
@@ -63,7 +75,12 @@ func APILogsGetByID(context echo.Context) error {
 	}
 
 	if log == nil {
-		return Return404(context, fmt.Errorf("No Log found with id %v", id))
+		return Return404(context, fmt.Errorf("no log found with id %v", id))
+	}
+
+	user := context.Get("user").(*jwt.Token).Claims.(*models.JwtClaims).User
+	if !log.IsOwner(user.ID) {
+		return Return403(context, fmt.Errorf("log doesn't belong to user"))
 	}
 
 	return context.JSON(http.StatusOK, log)
@@ -84,10 +101,26 @@ func APILogsUpdate(context echo.Context) error {
 	if err != nil {
 		return Return500(context, err)
 	}
-	log.ID = id
 
 	// Update
 	logCollection := models.LogCollection{}
+	currentLog, err := logCollection.Get(id)
+	if err != nil {
+		return Return500(context, err)
+	}
+
+	user := getUser(context)
+	if user == nil {
+		return Return500(context, fmt.Errorf("could not receive user"))
+	}
+
+	if !currentLog.IsOwner(user.ID) {
+		return Return403(context, fmt.Errorf("log doesn't belong to user"))
+	}
+
+	log.ID = currentLog.ID
+	log.UserID = currentLog.UserID
+
 	err = logCollection.Update(log)
 	if err != nil {
 		return Return500(context, err)
@@ -109,6 +142,20 @@ func APILogsDelete(context echo.Context) error {
 	log.ID = id
 
 	logCollection := models.LogCollection{}
+	currentLog, err := logCollection.Get(id)
+	if err != nil {
+		return Return500(context, err)
+	}
+
+	user := getUser(context)
+	if user == nil {
+		return Return500(context, fmt.Errorf("could not receive user"))
+	}
+
+	if !currentLog.IsOwner(user.ID) {
+		return Return403(context, fmt.Errorf("log doesn't belong to user"))
+	}
+
 	err = logCollection.Delete(log)
 	if err != nil {
 		return Return500(context, err)

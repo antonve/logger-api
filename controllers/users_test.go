@@ -44,7 +44,7 @@ func TestCreateUser(t *testing.T) {
 
 func TestLoginUser(t *testing.T) {
 	// Setup user to test login with
-	user := models.User{Username: "login_test", DisplayName: "logger_user", Password: "password", Role: enums.RoleStaff}
+	user := models.User{Username: "login_test", DisplayName: "logger_user", Password: "password", Role: enums.RoleAdmin}
 	user.HashPassword()
 	userCollection := models.UserCollection{}
 	userCollection.Add(&user)
@@ -73,7 +73,7 @@ func TestLoginUser(t *testing.T) {
 		// Check if the user has the correct information
 		assert.Equal(t, "login_test", body.User.Username)
 		assert.Equal(t, "logger_user", body.User.DisplayName)
-		assert.Equal(t, enums.RoleStaff, body.User.Role)
+		assert.Equal(t, enums.RoleAdmin, body.User.Role)
 
 		// Make sure password is not sent back to the client
 		assert.Empty(t, body.User.Password)
