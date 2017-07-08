@@ -16,6 +16,7 @@ type LogCollection struct {
 // Log model
 type Log struct {
 	ID       uint64         `json:"id" db:"id"`
+	UserID   uint64         `json:"user_id" db:"id"`
 	Language enums.Language `json:"language" db:"language"`
 	Date     string         `json:"date" db:"date"`
 	Duration uint64         `json:"duration" db:"duration"`
@@ -30,6 +31,9 @@ func (logCollection *LogCollection) Length() int {
 
 // Validate the Log model
 func (log *Log) Validate() error {
+	if log.UserID == 0 {
+		return errors.New("invalid `UserID` supplied")
+	}
 	if log.Date == "" {
 		return errors.New("invalid `Date` supplied")
 	}
@@ -51,6 +55,7 @@ func (logCollection *LogCollection) GetAll() error {
 	err := db.Select(&logCollection.Logs, `
 		SELECT
 			id,
+			user_id,
 			language,
 			to_char(date, 'YYYY-MM-DD') AS date,
 			duration,
@@ -61,6 +66,40 @@ func (logCollection *LogCollection) GetAll() error {
 	`)
 
 	return err
+}
+
+// GetAllFromUser returns all logs from a certain user
+func (logCollection *LogCollection) GetAllFromUser(userID uint64) (*Log, error) {
+	db := GetDatabase()
+	defer db.Close()
+
+	// Init log
+	log := Log{}
+
+	stmt, err := db.Preparex(`
+		SELECT
+			id,
+			user_id,
+			language,
+			to_char(date, 'YYYY-MM-DD') AS date,
+			duration,
+			activity,
+			notes
+		FROM logs
+    WHERE
+      user_id = $1 AND
+		  deleted = FALSE
+	`)
+	if err != nil {
+		return nil, err
+	}
+
+	stmt.Get(&log, userID)
+	if log.ID == 0 {
+		return nil, fmt.Errorf("no log found with user id %v", userID)
+	}
+
+	return &log, nil
 }
 
 // Get a log by id
@@ -75,6 +114,7 @@ func (logCollection *LogCollection) Get(id uint64) (*Log, error) {
 	stmt, err := db.Preparex(`
 		SELECT
 			id,
+			user_id
 			language,
 			to_char(date, 'YYYY-MM-DD') AS date,
 			duration,
@@ -103,7 +143,7 @@ func (logCollection *LogCollection) Add(log *Log) (uint64, error) {
 	defer db.Close()
 
 	query := `
-		INSERT INTO logs (language, date, duration, activity, notes)
+		INSERT INTO logs (user_id, language, date, duration, activity, notes)
 		VALUES (:language, :date, :duration, :activity, :notes)
 		RETURNING id
 	`
@@ -129,6 +169,7 @@ func (logCollection *LogCollection) Update(log *Log) error {
 	query := `
 		UPDATE logs
 		SET
+			user_id = :user_id,
 			language = :language,
 			date = :date,
 			duration = :duration,
