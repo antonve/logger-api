@@ -74,17 +74,17 @@ func Serve500(context echo.Context) error {
 
 // getUser helper
 func getUser(context echo.Context) *models.User {
-	token := context.Get("user").(*jwt.Token)
+	token := context.Get("user")
 	if token == nil {
 		return nil
 	}
 
-	claims := token.Claims.(*models.JwtClaims)
+	claims := token.(*jwt.Token).Claims
 	if claims == nil {
 		return nil
 	}
 
-	return claims.User
+	return claims.(*models.JwtClaims).User
 }
 
 func handleError(err error) {
