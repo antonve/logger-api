@@ -113,8 +113,8 @@ func (logCollection *LogCollection) GetAllFromUserByDateRange(userID uint64, dat
 		FROM logs
 		WHERE
 			user_id = $1 AND
-			date >= dateStart AND
-			date <= dateEnd AND
+			date >= $2 AND
+			date <= $3 AND
 		  deleted = FALSE
 	`, userID, dateStart, dateEnd)
 
