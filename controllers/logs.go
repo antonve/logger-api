@@ -21,6 +21,12 @@ func APILogsPost(context echo.Context) error {
 		return Return500(context, err)
 	}
 
+	user := getUser(context)
+	if user == nil {
+		return Return500(context, fmt.Errorf("could not receive user"))
+	}
+	log.UserID = user.ID
+
 	// Validate request
 	err = log.Validate()
 	if err != nil {

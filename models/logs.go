@@ -108,7 +108,7 @@ func (logCollection *LogCollection) Get(id uint64) (*Log, error) {
 	stmt, err := db.Preparex(`
 		SELECT
 			id,
-			user_id
+			user_id,
 			language,
 			to_char(date, 'YYYY-MM-DD') AS date,
 			duration,
@@ -138,7 +138,7 @@ func (logCollection *LogCollection) Add(log *Log) (uint64, error) {
 
 	query := `
 		INSERT INTO logs (user_id, language, date, duration, activity, notes)
-		VALUES (:language, :date, :duration, :activity, :notes)
+		VALUES (:user_id, :language, :date, :duration, :activity, :notes)
 		RETURNING id
 	`
 	rows, err := db.NamedQuery(query, log)
