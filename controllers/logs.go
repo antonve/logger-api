@@ -59,19 +59,16 @@ func APILogsGetAll(context echo.Context) error {
 
 	// Filter by date
 	if date != "" {
-		fmt.Println("date")
 		err = logCollection.GetAllFromUserByDate(user.ID, date)
 	}
 
 	// Only handle date ranges when no date is specified
 	if date == "" && from != "" && until != "" {
-		fmt.Println("daterange")
 		err = logCollection.GetAllFromUserByDateRange(user.ID, from, until)
 	}
 
 	// Handle no filters
 	if date == "" && (from == "" || until == "") {
-		fmt.Println("default")
 		err = logCollection.GetAllFromUser(user.ID)
 	}
 
