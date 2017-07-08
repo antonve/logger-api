@@ -118,6 +118,9 @@ func APILogsUpdate(context echo.Context) error {
 		return Return403(context, fmt.Errorf("log doesn't belong to user"))
 	}
 
+	log.ID = currentLog.ID
+	log.UserID = currentLog.UserID
+
 	err = logCollection.Update(log)
 	if err != nil {
 		return Return500(context, err)

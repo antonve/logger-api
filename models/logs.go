@@ -158,7 +158,6 @@ func (logCollection *LogCollection) Update(log *Log) error {
 	query := `
 		UPDATE logs
 		SET
-			user_id = :user_id,
 			language = :language,
 			date = :date,
 			duration = :duration,
@@ -166,6 +165,7 @@ func (logCollection *LogCollection) Update(log *Log) error {
 			notes = :notes
 		WHERE
 			id = :id AND
+			user_id = :user_id AND
 			deleted = FALSE
 	`
 	result, err := db.NamedExec(query, log)
@@ -175,7 +175,7 @@ func (logCollection *LogCollection) Update(log *Log) error {
 
 	rows, err := result.RowsAffected()
 	if rows == 0 {
-		err = fmt.Errorf("no log found with id %v", log.ID)
+		err = fmt.Errorf("no log found with id %d for user %d", log.ID, log.UserID)
 	}
 
 	return err
