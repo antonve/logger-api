@@ -75,12 +75,12 @@ func APILogsGetByID(context echo.Context) error {
 	}
 
 	if log == nil {
-		return Return404(context, fmt.Errorf("no Log found with id %v", id))
+		return Return404(context, fmt.Errorf("no log found with id %v", id))
 	}
 
 	user := context.Get("user").(*jwt.Token).Claims.(*models.JwtClaims).User
-	if log.IsOwner(user.ID) {
-		return Return403(context, fmt.Errorf("log entry doesn't belong to user"))
+	if !log.IsOwner(user.ID) {
+		return Return403(context, fmt.Errorf("log doesn't belong to user"))
 	}
 
 	return context.JSON(http.StatusOK, log)
