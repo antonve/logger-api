@@ -231,7 +231,7 @@ func TestGetAllPagination(t *testing.T) {
 	}
 
 	// Page 2
-	req = httptest.NewRequest(echo.GET, "/api/logs?page=5", nil)
+	req = httptest.NewRequest(echo.GET, "/api/logs?page=2", nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
 
@@ -254,6 +254,33 @@ func TestGetAllPagination(t *testing.T) {
 			countDays[log.Date] = true
 		}
 		assert.True(t, len(countDays) < 30)
+		assert.False(t, len(countDays) == 0)
+	}
+
+	// Page 9000
+	req = httptest.NewRequest(echo.GET, "/api/logs?page=9000", nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
+
+	rec = httptest.NewRecorder()
+	c = e.NewContext(req, rec)
+	c.SetPath("/api/logs")
+
+	if assert.NoError(t, middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtClaims{}))(controllers.APILogsGetAll)(c)) {
+		// Check response
+		var body LogsBody
+		assert.Equal(t, http.StatusOK, rec.Code)
+		err := json.Unmarshal(rec.Body.Bytes(), &body)
+
+		// Check if the log has information
+		assert.Nil(t, err)
+
+		countDays := make(map[string]bool)
+
+		for _, log := range body.Logs {
+			countDays[log.Date] = true
+		}
+		assert.True(t, len(countDays) == 0)
 	}
 }
 
