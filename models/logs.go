@@ -104,6 +104,95 @@ func (logCollection *LogCollection) GetAllFromUser(userID uint64) error {
 	return err
 }
 
+// GetAllWithFilters returns all logs with filters applied
+func (logCollection *LogCollection) GetAllWithFilters(filters map[string]interface{}) error {
+	db := GetDatabase()
+	defer db.Close()
+
+	where := "DELETED = FALSE"
+
+	for filter, value := range filters {
+		switch filter {
+		case "user_id":
+			filters["user_id"] = value.(uint64)
+			if filters["user_id"] != 0 {
+				where = where + " AND user_id = :user_id"
+			}
+		case "date":
+			if value != "" {
+				where = where + " AND date = :date"
+			}
+		case "from":
+			if value != "" {
+				where = where + " AND date >= :from"
+			}
+		case "until":
+			if value != "" {
+				where = where + " AND date <= :until"
+			}
+		case "language":
+			if value != "" {
+				where = where + " AND language = :language"
+			}
+		case "page":
+			page, ok := value.(uint64)
+			if !ok {
+				page = 0
+			}
+			filters["page"] = page
+		}
+	}
+
+	query := `
+		SELECT
+			id,
+			user_id,
+			language,
+			to_char(date, 'YYYY-MM-DD') AS date,
+			duration,
+			activity,
+			notes
+		FROM logs
+		WHERE
+			id IN (
+				SELECT
+					unnest(ids)
+				FROM (
+					SELECT
+						array_agg(id) AS ids
+					FROM logs
+					WHERE
+						` + where + `
+					GROUP BY date
+					ORDER BY date DESC
+					OFFSET :page
+					LIMIT 30
+				) AS filtered_logs
+			)
+	`
+
+	query = query + " ORDER BY date DESC, language"
+
+	rows, err := db.NamedQuery(query, filters)
+
+	if err != nil {
+		return err
+	}
+
+	for rows.Next() {
+		var log Log
+		err = rows.StructScan(&log)
+
+		if err != nil {
+			return err
+		}
+
+		logCollection.Logs = append(logCollection.Logs, log)
+	}
+
+	return err
+}
+
 // GetAllFromUserByDate returns all logs from a certain user on a certain date
 func (logCollection *LogCollection) GetAllFromUserByDate(userID uint64, date string) error {
 	return logCollection.GetAllFromUserByDateRange(userID, date, date)
