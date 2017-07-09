@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/antonve/logger-api/models"
-	"github.com/antonve/logger-api/models/enums"
 	jwt "github.com/dgrijalva/jwt-go"
 
 	"github.com/labstack/echo"
@@ -47,39 +46,25 @@ func APILogsPost(context echo.Context) error {
 // APILogsGetAll gets all logs
 func APILogsGetAll(context echo.Context) error {
 	logCollection := models.LogCollection{Logs: make([]models.Log, 0)}
-	var err error = nil
 	user := getUser(context)
 	if user == nil {
 		return ServeWithError(context, 500, fmt.Errorf("could not receive user"))
 	}
 
 	// Filters
-	date := context.QueryParam("date")
-	from := context.QueryParam("from")
-	until := context.QueryParam("until")
-	language := context.QueryParam("language")
-
-	// Filter by date
-	if date != "" {
-		err = logCollection.GetAllFromUserByDate(user.ID, date)
+	filters := map[string]interface{}{
+		"user_id":  user.ID,
+		"date":     context.QueryParam("date"),
+		"from":     context.QueryParam("from"),
+		"until":    context.QueryParam("until"),
+		"language": context.QueryParam("language"),
+		"page":     context.QueryParam("page"),
 	}
 
-	// Only handle date ranges when no date is specified
-	if date == "" && from != "" && until != "" {
-		err = logCollection.GetAllFromUserByDateRange(user.ID, from, until)
-	}
-
-	// Handle no filters
-	if date == "" && (from == "" || until == "") {
-		err = logCollection.GetAllFromUser(user.ID)
-	}
+	err := logCollection.GetAllWithFilters(filters)
 
 	if err != nil {
 		return ServeWithError(context, 500, err)
-	}
-
-	if language != "" {
-		logCollection.ByLanguage(enums.Language(language))
 	}
 
 	return context.JSON(http.StatusOK, logCollection)

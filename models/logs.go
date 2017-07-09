@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/antonve/logger-api/models/enums"
 	"github.com/jmoiron/sqlx/types"
@@ -104,17 +105,47 @@ func (logCollection *LogCollection) GetAllFromUser(userID uint64) error {
 	return err
 }
 
-// GetAllFromUserByDate returns all logs from a certain user on a certain date
-func (logCollection *LogCollection) GetAllFromUserByDate(userID uint64, date string) error {
-	return logCollection.GetAllFromUserByDateRange(userID, date, date)
-}
-
-// GetAllFromUserByDateRange returns all logs from a certain user in a certain date range
-func (logCollection *LogCollection) GetAllFromUserByDateRange(userID uint64, dateStart string, dateEnd string) error {
+// GetAllWithFilters returns all logs with filters applied
+func (logCollection *LogCollection) GetAllWithFilters(filters map[string]interface{}) error {
 	db := GetDatabase()
 	defer db.Close()
 
-	err := db.Select(&logCollection.Logs, `
+	where := "DELETED = FALSE"
+
+	for filter, value := range filters {
+		switch filter {
+		case "user_id":
+			filters["user_id"] = value.(uint64)
+			if filters["user_id"] != 0 {
+				where = where + " AND user_id = :user_id"
+			}
+		case "date":
+			if value != "" {
+				where = where + " AND date = :date"
+			}
+		case "from":
+			if value != "" {
+				where = where + " AND date >= :from"
+			}
+		case "until":
+			if value != "" {
+				where = where + " AND date <= :until"
+			}
+		case "language":
+			if value != "" {
+				where = where + " AND language = :language"
+			}
+		case "page":
+			page, err := strconv.ParseUint(value.(string), 10, 64)
+			if err != nil || page <= 0 {
+				page = 1
+			}
+
+			filters["page"] = (page - 1) * 30
+		}
+	}
+
+	query := `
 		SELECT
 			id,
 			user_id,
@@ -125,11 +156,41 @@ func (logCollection *LogCollection) GetAllFromUserByDateRange(userID uint64, dat
 			notes
 		FROM logs
 		WHERE
-			user_id = $1 AND
-			date >= $2 AND
-			date <= $3 AND
-		  deleted = FALSE
-	`, userID, dateStart, dateEnd)
+			id IN (
+				SELECT
+					unnest(ids)
+				FROM (
+					SELECT
+						array_agg(id) AS ids
+					FROM logs
+					WHERE
+						` + where + `
+					GROUP BY date
+					ORDER BY date DESC
+					OFFSET :page
+					LIMIT 30
+				) AS filtered_logs
+			)
+	`
+
+	query = query + " ORDER BY date DESC, language"
+
+	rows, err := db.NamedQuery(query, filters)
+
+	if err != nil {
+		return err
+	}
+
+	for rows.Next() {
+		var log Log
+		err = rows.StructScan(&log)
+
+		if err != nil {
+			return err
+		}
+
+		logCollection.Logs = append(logCollection.Logs, log)
+	}
 
 	return err
 }
