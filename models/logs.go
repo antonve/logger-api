@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/antonve/logger-api/models/enums"
 	"github.com/jmoiron/sqlx/types"
@@ -135,11 +136,12 @@ func (logCollection *LogCollection) GetAllWithFilters(filters map[string]interfa
 				where = where + " AND language = :language"
 			}
 		case "page":
-			page, ok := value.(uint64)
-			if !ok {
-				page = 0
+			page, err := strconv.ParseUint(value.(string), 10, 64)
+			if err != nil || page <= 0 {
+				page = 1
 			}
-			filters["page"] = page
+
+			filters["page"] = (page - 1) * 30
 		}
 	}
 

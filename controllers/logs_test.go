@@ -193,6 +193,70 @@ func TestGetAll(t *testing.T) {
 	}
 }
 
+func TestGetAllPagination(t *testing.T) {
+	// Setup log to grab
+	logCollection := models.LogCollection{}
+	var ids [35]uint64
+	for key := 0; key < 31; key++ {
+		ids[key], _ = logCollection.Add(&models.Log{UserID: mockUser.ID, Language: enums.LanguageJapanese, Date: fmt.Sprintf("2016-07-%d", key+1), Duration: 30, Activity: enums.ActivityGrammar})
+	}
+
+	// Setup log request
+	e := echo.New()
+
+	// Page 1
+	req := httptest.NewRequest(echo.GET, "/api/logs?page=1", nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/api/logs")
+
+	if assert.NoError(t, middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtClaims{}))(controllers.APILogsGetAll)(c)) {
+		// Check response
+		var body LogsBody
+		assert.Equal(t, http.StatusOK, rec.Code)
+		err := json.Unmarshal(rec.Body.Bytes(), &body)
+
+		// Check if the log has information
+		assert.Nil(t, err)
+
+		countDays := make(map[string]bool)
+
+		for _, log := range body.Logs {
+			countDays[log.Date] = true
+		}
+		assert.True(t, len(countDays) == 30)
+	}
+
+	// Page 2
+	req = httptest.NewRequest(echo.GET, "/api/logs?page=5", nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
+
+	rec = httptest.NewRecorder()
+	c = e.NewContext(req, rec)
+	c.SetPath("/api/logs")
+
+	if assert.NoError(t, middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtClaims{}))(controllers.APILogsGetAll)(c)) {
+		// Check response
+		var body LogsBody
+		assert.Equal(t, http.StatusOK, rec.Code)
+		err := json.Unmarshal(rec.Body.Bytes(), &body)
+
+		// Check if the log has information
+		assert.Nil(t, err)
+
+		countDays := make(map[string]bool)
+
+		for _, log := range body.Logs {
+			countDays[log.Date] = true
+		}
+		assert.True(t, len(countDays) < 30)
+	}
+}
+
 func TestUpdate(t *testing.T) {
 	// Setup log to grab
 	logCollection := models.LogCollection{}
