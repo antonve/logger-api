@@ -151,33 +151,32 @@ func (logCollection *LogCollection) GetAllWithFilters(filters map[string]interfa
 
 	query := `
 		WITH filtered_logs AS (
-		  SELECT
-		    unnest(ids) AS id
-		  FROM (
-		    SELECT
-		      array_agg(id) AS ids
-		    FROM logs
-		    WHERE
-					` + where + `
+			SELECT
+				unnest(ids) AS id
+			FROM (
+				SELECT
+					array_agg(id) AS ids
+				FROM logs
+				WHERE ` + where + `
 				GROUP BY date
 				ORDER BY date DESC
-		    OFFSET :page
-		    LIMIT 30
-		  ) AS agg_ids
+				OFFSET :page
+				LIMIT 30
+			) AS agg_ids
 		)
 		SELECT
-		  id,
-		  user_id,
-		  language,
+			id,
+			user_id,
+			language,
 			to_char(date, 'YYYY-MM-DD') AS date,
-		  duration,
-		  activity,
-		  notes
+			duration,
+			activity,
+			notes
 		FROM logs l
 		WHERE EXISTS (
-		  SELECT 1
-		  FROM filtered_logs fl
-		  WHERE fl.id = l.id
+			SELECT 1
+			FROM filtered_logs fl
+			WHERE fl.id = l.id
 		)
 		ORDER BY date DESC, language
 	`
