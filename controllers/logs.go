@@ -144,7 +144,6 @@ func APILogsDelete(context echo.Context) error {
 	log := &models.Log{}
 
 	// Parse out id
-	fmt.Println(context.Param("id"))
 	id, err := strconv.ParseUint(context.Param("id"), 10, 64)
 	if err != nil {
 		return ServeWithError(context, 500, err)
