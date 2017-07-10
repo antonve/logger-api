@@ -145,7 +145,25 @@ func (logCollection *LogCollection) GetAllWithFilters(filters map[string]interfa
 		}
 	}
 
+	if _, ok := filters["page"]; !ok {
+		filters["page"] = 0
+	}
+
 	query := `
+		WITH filtered_logs AS (
+			SELECT
+				unnest(ids) AS id
+			FROM (
+				SELECT
+					array_agg(id) AS ids
+				FROM logs
+				WHERE ` + where + `
+				GROUP BY date
+				ORDER BY date DESC
+				OFFSET :page
+				LIMIT 30
+			) AS agg_ids
+		)
 		SELECT
 			id,
 			user_id,
@@ -154,26 +172,14 @@ func (logCollection *LogCollection) GetAllWithFilters(filters map[string]interfa
 			duration,
 			activity,
 			notes
-		FROM logs
-		WHERE
-			id IN (
-				SELECT
-					unnest(ids)
-				FROM (
-					SELECT
-						array_agg(id) AS ids
-					FROM logs
-					WHERE
-						` + where + `
-					GROUP BY date
-					ORDER BY date DESC
-					OFFSET :page
-					LIMIT 30
-				) AS filtered_logs
-			)
+		FROM logs l
+		WHERE EXISTS (
+			SELECT 1
+			FROM filtered_logs fl
+			WHERE fl.id = l.id
+		)
+		ORDER BY date DESC, language
 	`
-
-	query = query + " ORDER BY date DESC, language"
 
 	rows, err := db.NamedQuery(query, filters)
 

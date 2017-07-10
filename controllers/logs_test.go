@@ -342,8 +342,8 @@ func TestDelete(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Equal(t, `{"success": true}`, rec.Body.String())
 
-		log, e := logCollection.Get(id)
-		fmt.Println(e)
+		log, err := logCollection.Get(id)
 		assert.Nil(t, log)
+		assert.Error(t, err)
 	}
 }
