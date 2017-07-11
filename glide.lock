@@ -1,6 +1,8 @@
-hash: e6dcc1c6c1ea8b8164017be5bb73f744dd90486787e191c2b9baafa21a93e3d9
-updated: 2017-05-23T13:58:20.167306148+09:00
+hash: 0a8b76f89804e3fe6f1ac79f7c786a9337d8df0ce4d78ad79fc47c375879c330
+updated: 2017-07-11T21:53:52.18162153+09:00
 imports:
+- name: github.com/badoux/checkmail
+  version: d0a759655d62bcdc95c50a0676f3e9702ed59453
 - name: github.com/DavidHuie/gomigrate
   version: 4004e6142040f5d622e9d2be6e833a4652741571
 - name: github.com/dgrijalva/jwt-go
@@ -11,6 +13,7 @@ imports:
   version: f980a91bdc37abef88269b8f122d7de6352102f5
   subpackages:
   - reflectx
+  - types
 - name: github.com/labstack/echo
   version: 8d504c1b699c757b267255c53b3e5219f9974abc
   subpackages:
@@ -23,7 +26,7 @@ imports:
   - log
   - random
 - name: github.com/lib/pq
-  version: 2704adc878c21e1329f46f6e56a1c387d788ff94
+  version: dd1fe2071026ce53f36a39112e645b4d4f5793a4
   subpackages:
   - oid
 - name: github.com/mattn/go-colorable

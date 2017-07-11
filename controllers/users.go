@@ -28,7 +28,7 @@ func APIUserLogin(context echo.Context) error {
 
 	// Get authentication data
 	userCollection := models.UserCollection{Users: make([]models.User, 0)}
-	dbUser, err := userCollection.GetAuthenticationData(user.Username)
+	dbUser, err := userCollection.GetAuthenticationData(user.Email)
 	if err != nil {
 		log.Println(err)
 		return echo.ErrUnauthorized
