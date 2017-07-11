@@ -117,13 +117,18 @@ func APIUserGetByID(context echo.Context) error {
 		return ServeWithError(context, 500, err)
 	}
 
+	currentUser := context.Get("currentUser").(*jwt.Token).Claims.(*models.JwtClaims).User
+	if !(currentUser != nil && (currentUser.ID == id || currentUser.Role == enums.RoleAdmin)) {
+		return ServeWithError(context, 403, fmt.Errorf("not allowed to access this user"))
+	}
+
 	user, err := userCollection.Get(id)
 	if err != nil {
 		return ServeWithError(context, 500, err)
 	}
 
 	if user == nil {
-		return ServeWithError(context, 404, fmt.Errorf("No User found with id %v", id))
+		return ServeWithError(context, 404, fmt.Errorf("no User found with id %v", id))
 	}
 
 	return context.JSON(http.StatusOK, user)
@@ -145,6 +150,11 @@ func APIUserUpdate(context echo.Context) error {
 		return ServeWithError(context, 500, err)
 	}
 	user.ID = id
+
+	currentUser := context.Get("currentUser").(*jwt.Token).Claims.(*models.JwtClaims).User
+	if !(currentUser != nil && (currentUser.ID == id || currentUser.Role == enums.RoleAdmin)) {
+		return ServeWithError(context, 403, fmt.Errorf("not allowed to access this user"))
+	}
 
 	// Update
 	userCollection := models.UserCollection{}

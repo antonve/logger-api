@@ -15,12 +15,17 @@ func SetupRouting(e *echo.Echo) {
 	routesAPI.POST("/login", echo.HandlerFunc(controllers.APIUserLogin))
 	routesAPI.POST("/register", echo.HandlerFunc(controllers.APIUserRegister))
 
-	routesLogs := routesAPI.Group("/logs")
-	routesLogs.Use(middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtClaims{})))
+	protectedRoutes := routesAPI.Group("/", middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtClaims{})))
+
+	routesLogs := protectedRoutes.Group("/logs")
 	routesLogs.GET("", echo.HandlerFunc(controllers.APILogsGetAll))
 	routesLogs.POST("", echo.HandlerFunc(controllers.APILogsPost))
 	routesLogs.GET("/:id", echo.HandlerFunc(controllers.APILogsGetByID))
 	routesLogs.PUT("/:id", echo.HandlerFunc(controllers.APILogsUpdate))
 	routesLogs.DELETE("/:id", echo.HandlerFunc(controllers.APILogsDelete))
+
+	routesUser := protectedRoutes.Group("/user")
+	routesUser.GET("/:id", echo.HandlerFunc(controllers.APIUserGetByID))
+	routesUser.PUT("/:id", echo.HandlerFunc(controllers.APIUserUpdate))
 
 }
