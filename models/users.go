@@ -176,7 +176,7 @@ func (userCollection *UserCollection) Add(user *User) (uint64, error) {
 
 	query := `
 		INSERT INTO users
-		(email, display_name, password, role, :preferences)
+		(email, display_name, password, role, preferences)
 		VALUES (:email, :display_name, :password, :role, :preferences)
 		RETURNING id
 	`
