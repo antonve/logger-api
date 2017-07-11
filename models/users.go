@@ -1,8 +1,11 @@
 package models
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 
 	"github.com/antonve/logger-api/models/enums"
 
@@ -18,11 +21,37 @@ type UserCollection struct {
 
 // User model
 type User struct {
-	ID          uint64     `json:"id" db:"id"`
-	Username    string     `json:"username" db:"username"`
-	DisplayName string     `json:"display_name" db:"display_name"`
-	Password    string     `json:"password" db:"password"`
-	Role        enums.Role `json:"role" db:"role"`
+	ID          uint64      `json:"id" db:"id"`
+	Username    string      `json:"username" db:"username"`
+	DisplayName string      `json:"display_name" db:"display_name"`
+	Password    string      `json:"password" db:"password"`
+	Role        enums.Role  `json:"role" db:"role"`
+	Preferences Preferences `json:"preferences" db:"preferences"`
+}
+
+// Preferences model
+type Preferences struct {
+	Languages     []enums.Language `json:"languages" db:"languages"`
+	PublicProfile bool             `json:"public_profile" db:"public_profile"`
+}
+
+// Value of preferences (support for embedded preferences)
+func (preferences Preferences) Value() (driver.Value, error) {
+	return json.Marshal(preferences)
+}
+
+// Scan of preferences (support for embedded preferences)
+func (preferences Preferences) Scan(src interface{}) error {
+	value := reflect.ValueOf(src)
+	if !value.IsValid() || value.IsNil() {
+		return nil
+	}
+
+	if data, ok := src.([]byte); ok {
+		return json.Unmarshal(data, &preferences)
+	}
+
+	return fmt.Errorf("could not not decode type %T -> %T", src, preferences)
 }
 
 // JwtClaims json web token claim
@@ -96,7 +125,8 @@ func (userCollection *UserCollection) Get(id uint64) (*User, error) {
 			id,
 			username,
 			display_name,
-			role
+			role,
+			preferences
 		FROM users
 		WHERE
 			id = $1
@@ -142,8 +172,8 @@ func (userCollection *UserCollection) Add(user *User) (uint64, error) {
 
 	query := `
 		INSERT INTO users
-		(username, display_name, password, role)
-		VALUES (:username, :display_name, :password, :role)
+		(username, display_name, password, role, :preferences)
+		VALUES (:username, :display_name, :password, :role, :preferences)
 		RETURNING id
 	`
 	rows, err := db.NamedQuery(query, user)
@@ -170,7 +200,8 @@ func (userCollection *UserCollection) Update(user *User) error {
 		SET
 			username = :username,
 			display_name = :display_name,
-			role = :role
+			role = :role,
+			preferences = :preferences
 		WHERE id = :id
 	`
 	result, err := db.NamedExec(query, user)

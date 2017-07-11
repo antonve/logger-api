@@ -28,7 +28,7 @@ func init() {
 func TestCreateUser(t *testing.T) {
 	// Setup registration request
 	e := echo.New()
-	req, err := http.NewRequest(echo.POST, "/api/register", strings.NewReader(`{"username": "register_test", "display_name": "logger", "password": "password"}`))
+	req, err := http.NewRequest(echo.POST, "/api/register", strings.NewReader(`{"username": "register_test", "display_name": "logger", "password": "password", "preferences": { "languages": ["JA", "DE", "ZH", "KR"], "public_profile": false } }`))
 	if !assert.NoError(t, err) {
 		return
 	}
