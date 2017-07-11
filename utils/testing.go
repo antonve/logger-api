@@ -28,7 +28,7 @@ func SetupTesting() {
 // SetupTestUser a mock user for testing
 func SetupTestUser() (string, *models.User) {
 	user := &models.User{
-		Username:    "mock_user",
+		Email:       "mock_email@example.com",
 		DisplayName: "mock_name",
 		Password:    "mock_password",
 		Role:        enums.RoleUser,
@@ -41,7 +41,7 @@ func SetupTestUser() (string, *models.User) {
 		return "", nil
 	}
 
-	dbUser, err := userCollection.GetAuthenticationData(user.Username)
+	dbUser, err := userCollection.GetAuthenticationData(user.Email)
 	if err != nil {
 		return "", nil
 	}
