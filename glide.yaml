@@ -12,6 +12,7 @@ import:
   version: ~3.0
 - package: github.com/tylerb/graceful
   version: ^1.2.15
+- package: github.com/badoux/checkmail
 testImport:
 - package: github.com/stretchr/testify
   subpackages:

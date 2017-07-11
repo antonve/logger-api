@@ -8,6 +8,7 @@ import (
 	"reflect"
 
 	"github.com/antonve/logger-api/models/enums"
+	"github.com/badoux/checkmail"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -22,7 +23,7 @@ type UserCollection struct {
 // User model
 type User struct {
 	ID          uint64      `json:"id" db:"id"`
-	Username    string      `json:"username" db:"username"`
+	Email       string      `json:"email" db:"email"`
 	DisplayName string      `json:"display_name" db:"display_name"`
 	Password    string      `json:"password" db:"password"`
 	Role        enums.Role  `json:"role" db:"role"`
@@ -67,8 +68,11 @@ func (userCollection *UserCollection) Length() int {
 
 // Validate the User model
 func (user *User) Validate() error {
-	if len(user.Username) == 0 {
-		return errors.New("invalid `Username` supplied")
+	if len(user.Email) == 0 {
+		return errors.New("no `email` supplied")
+	}
+	if err := checkmail.ValidateFormat(user.Email); err != nil {
+		return errors.New("invalid `Email` supplied")
 	}
 	if len(user.DisplayName) == 0 {
 		return errors.New("invalid `DisplayName` supplied")
@@ -102,7 +106,7 @@ func (userCollection *UserCollection) GetAll() error {
 	err := db.Select(&userCollection.Users, `
 		SELECT
 			id,
-			username,
+			email,
 			display_name,
 			role
 		FROM users
@@ -123,7 +127,7 @@ func (userCollection *UserCollection) Get(id uint64) (*User, error) {
 	stmt, err := db.Preparex(`
 		SELECT
 			id,
-			username,
+			email,
 			display_name,
 			role,
 			preferences
@@ -140,7 +144,7 @@ func (userCollection *UserCollection) Get(id uint64) (*User, error) {
 }
 
 // GetAuthenticationData get data needed to generate jwt token
-func (userCollection *UserCollection) GetAuthenticationData(username string) (*User, error) {
+func (userCollection *UserCollection) GetAuthenticationData(email string) (*User, error) {
 	db := GetDatabase()
 	defer db.Close()
 
@@ -149,18 +153,18 @@ func (userCollection *UserCollection) GetAuthenticationData(username string) (*U
 	stmt, err := db.Preparex(`
 		SELECT
 			id,
-			username,
+			email,
 			display_name,
 			role,
 			password
 		FROM users
-		WHERE username = $1
+		WHERE email = $1
 	`)
 	if err != nil {
 		return nil, err
 	}
 
-	stmt.Get(&user, username)
+	stmt.Get(&user, email)
 
 	return &user, err
 }
@@ -172,8 +176,8 @@ func (userCollection *UserCollection) Add(user *User) (uint64, error) {
 
 	query := `
 		INSERT INTO users
-		(username, display_name, password, role, :preferences)
-		VALUES (:username, :display_name, :password, :role, :preferences)
+		(email, display_name, password, role, :preferences)
+		VALUES (:email, :display_name, :password, :role, :preferences)
 		RETURNING id
 	`
 	rows, err := db.NamedQuery(query, user)
@@ -198,7 +202,7 @@ func (userCollection *UserCollection) Update(user *User) error {
 	query := `
 		UPDATE users
 		SET
-			username = :username,
+			email = :email,
 			display_name = :display_name,
 			role = :role,
 			preferences = :preferences

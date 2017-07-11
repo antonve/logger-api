@@ -28,7 +28,7 @@ func init() {
 func TestCreateUser(t *testing.T) {
 	// Setup registration request
 	e := echo.New()
-	req, err := http.NewRequest(echo.POST, "/api/register", strings.NewReader(`{"username": "register_test", "display_name": "logger", "password": "password", "preferences": { "languages": ["JA", "DE", "ZH", "KR"], "public_profile": false } }`))
+	req, err := http.NewRequest(echo.POST, "/api/register", strings.NewReader(`{"email": "register_test@example.com", "display_name": "logger", "password": "password", "preferences": { "languages": ["JA", "DE", "ZH", "KR"], "public_profile": false }}`))
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -42,16 +42,33 @@ func TestCreateUser(t *testing.T) {
 	}
 }
 
+func TestCreateInvalidUser(t *testing.T) {
+	// Setup registration request
+	e := echo.New()
+	req, err := http.NewRequest(echo.POST, "/api/register", strings.NewReader(`{"email": "register_test@invalid##", "display_name": "invalid", "password": "password"}`))
+	if !assert.NoError(t, err) {
+		return
+	}
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	if assert.NoError(t, controllers.APIUserRegister(c)) {
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.NotEqual(t, `{"success": true}`, rec.Body.String())
+	}
+}
+
 func TestLoginUser(t *testing.T) {
 	// Setup user to test login with
-	user := models.User{Username: "login_test", DisplayName: "logger_user", Password: "password", Role: enums.RoleAdmin}
+	user := models.User{Email: "login_test@example.com", DisplayName: "logger_user", Password: "password", Role: enums.RoleAdmin}
 	user.HashPassword()
 	userCollection := models.UserCollection{}
 	userCollection.Add(&user)
 
 	// Setup login request
 	e := echo.New()
-	req, err := http.NewRequest(echo.POST, "/api/login", strings.NewReader(`{"username": "login_test", "password": "password"}`))
+	req, err := http.NewRequest(echo.POST, "/api/login", strings.NewReader(`{"email": "login_test@example.com", "password": "password"}`))
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -71,7 +88,7 @@ func TestLoginUser(t *testing.T) {
 		assert.NotNil(t, body.User)
 
 		// Check if the user has the correct information
-		assert.Equal(t, "login_test", body.User.Username)
+		assert.Equal(t, "login_test@example.com", body.User.Email)
 		assert.Equal(t, "logger_user", body.User.DisplayName)
 		assert.Equal(t, enums.RoleAdmin, body.User.Role)
 
