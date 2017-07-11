@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/antonve/logger-api/models/enums"
+	"github.com/badoux/checkmail"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -39,6 +40,9 @@ func (userCollection *UserCollection) Length() int {
 // Validate the User model
 func (user *User) Validate() error {
 	if len(user.Email) == 0 {
+		return errors.New("no `email` supplied")
+	}
+	if err := checkmail.ValidateFormat(user.Email); err != nil {
 		return errors.New("invalid `Email` supplied")
 	}
 	if len(user.DisplayName) == 0 {
