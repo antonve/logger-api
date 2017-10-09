@@ -50,6 +50,7 @@ func SetupTestUser() (string, *models.User) {
 	dbUser.Password = ""
 	claims := models.JwtClaims{
 		dbUser,
+		0,
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
 		},
