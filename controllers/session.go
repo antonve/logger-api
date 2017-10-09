@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/antonve/logger-api/config"
@@ -88,6 +89,32 @@ func APISessionRefreshJWTToken(context echo.Context) error {
 	if err != nil {
 		log.Println(err)
 		return echo.ErrUnauthorized
+	}
+
+	// Check if refresh token was used for the current JWT token,
+	// and if so make sure that one is still valid before refreshing
+	refreshTokenStringID := context.Param("refresh_token_id")
+	if refreshTokenStringID != "" {
+		refreshTokenID, err := strconv.ParseUint(refreshTokenStringID, 10, 64)
+		if err != nil {
+			return ServeWithError(context, 500, err)
+		}
+
+		// Only proceed when we have a valid id
+		if refreshTokenID != 0 {
+			refreshTokenCollection := models.RefreshTokenCollection{RefreshTokens: make([]models.RefreshToken, 0)}
+			refreshToken, err := refreshTokenCollection.Get(refreshTokenID)
+
+			if err != nil {
+				return ServeWithError(context, 500, err)
+			}
+
+			// Deny request if we have invalidated the refresh token
+			if refreshToken.InvalidatedAt.Valid {
+				log.Println("attempted JWT token refresh with expired session")
+				return echo.ErrUnauthorized
+			}
+		}
 	}
 
 	// Set custom claims
