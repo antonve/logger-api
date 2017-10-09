@@ -42,19 +42,7 @@ func APIUserLogin(context echo.Context) error {
 	}
 
 	// Set custom claims
-	dbUser.Password = ""
-	claims := models.JwtClaims{
-		dbUser,
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
-		},
-	}
-
-	// Create token with claims
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Generate encoded token and send it as response.
-	encodedToken, err := token.SignedString([]byte(config.GetConfig().JWTKey))
+	encodedToken, err := generateJWTToken(dbUser)
 	if err != nil {
 		return ServeWithError(context, 500, err)
 	}
@@ -63,6 +51,23 @@ func APIUserLogin(context echo.Context) error {
 		"token": encodedToken,
 		"user":  dbUser,
 	})
+}
+
+// generateJWTToken generates a new JWT token that's valid for one hour for a given user
+func generateJWTToken(user *models.User) (string, error) {
+	user.Password = ""
+	claims := models.JwtClaims{
+		user,
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(),
+		},
+	}
+
+	// Create token with claims
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Generate encoded token and send it as response.
+	return token.SignedString([]byte(config.GetConfig().JWTKey))
 }
 
 // APIUserRegister registers new user
