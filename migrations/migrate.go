@@ -2,6 +2,7 @@ package migrations
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/antonve/logger-api/config"
@@ -22,6 +23,7 @@ func getMigrator() (*gomigrate.Migrator, error) {
 
 // Migrate migrates the database
 func Migrate() error {
+	log.Printf("Migrating in environment: %s", config.GetConfig().Environment)
 	migrator, err := getMigrator()
 
 	if err != nil {
