@@ -70,6 +70,41 @@ func generateJWTToken(user *models.User) (string, error) {
 	return token.SignedString([]byte(config.GetConfig().JWTKey))
 }
 
+// APIUserRefreshJWTToken will provide a new JWT token for a user who currently
+// possess a valid JWT token
+func APIUserRefreshJWTToken(context echo.Context) error {
+	// Get user to work with
+	user := getUser(context)
+	if user == nil {
+		return ServeWithError(context, 500, fmt.Errorf("could not receive user"))
+	}
+
+	// Get authentication data
+	userCollection := models.UserCollection{Users: make([]models.User, 0)}
+	dbUser, err := userCollection.GetAuthenticationData(user.Email)
+	if err != nil {
+		log.Println(err)
+		return echo.ErrUnauthorized
+	}
+
+	// Set custom claims
+	encodedToken, err := generateJWTToken(dbUser)
+	if err != nil {
+		return ServeWithError(context, 500, err)
+	}
+
+	// Send new token to the user
+	return context.JSON(http.StatusOK, map[string]interface{}{
+		"token": encodedToken,
+		"user":  dbUser,
+	})
+}
+
+// APIUserNewJWTToken will provide a new JWT token for a user whose token has expired
+// but can provide a device id & refresh token to generate a new one
+//func APIUserNewJWTToken(context echo.Context) error {
+//}
+
 // APIUserRegister registers new user
 func APIUserRegister(context echo.Context) error {
 	user := &models.User{}
