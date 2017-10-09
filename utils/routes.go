@@ -11,14 +11,16 @@ import (
 
 // SetupRouting Define all routes here
 func SetupRouting(e *echo.Echo) {
+	// Middleware
 	authenticated := middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtClaims{}))
 
+	// Routes
 	routesAPI := e.Group("/api")
-	routesAPI.POST("/login", echo.HandlerFunc(controllers.APIUserLogin))
-	routesAPI.POST("/register", echo.HandlerFunc(controllers.APIUserRegister))
+	routesAPI.POST("/login", echo.HandlerFunc(controllers.APISessionLogin))
+	routesAPI.POST("/register", echo.HandlerFunc(controllers.APISessionRegister))
 
 	routesSessions := routesAPI.Group("/session")
-	routesSessions.POST("/refresh", authenticated(echo.HandlerFunc(controllers.APIUserRefreshJWTToken)))
+	routesSessions.POST("/refresh", authenticated(echo.HandlerFunc(controllers.APISessionRefreshJWTToken)))
 
 	routesLogs := routesAPI.Group("/logs")
 	routesLogs.Use(authenticated)
