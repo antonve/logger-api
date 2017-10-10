@@ -15,8 +15,8 @@ import (
 
 // JwtRefreshTokenClaims json web token claim for refresh token
 type JwtRefreshTokenClaims struct {
-	UserID   uint64 `json:"user_id"`
-	DeviceID string `json:"device_id"`
+	UserID   uint64 `json:"user_id" db:"user_id"`
+	DeviceID string `json:"device_id" db:"device_id"`
 	jwt.StandardClaims
 }
 
@@ -119,6 +119,43 @@ func (refreshTokenCollection *RefreshTokenCollection) Get(id uint64) (*RefreshTo
 	stmt.Get(&refreshToken, id)
 	if refreshToken.ID == 0 {
 		return nil, fmt.Errorf("no refresh token found with id %v", id)
+	}
+
+	return &refreshToken, nil
+}
+
+// Get a refresh token by claims
+// nil is returned when a token is invalidated
+func (refreshTokenCollection *RefreshTokenCollection) GetByClaims(claims *JwtRefreshTokenClaims) (*RefreshToken, error) {
+	db := GetDatabase()
+	defer db.Close()
+
+	// Init refresh token
+	refreshToken := RefreshToken{}
+
+	// Get refresh token
+	stmt, err := db.PrepareNamed(`
+		SELECT
+			id,
+			user_id,
+			device_id,
+			refresh_token,
+			created_at,
+			updated_at,
+			invalidated_at
+		FROM refresh_tokens
+		WHERE
+			user_id = :user_id AND
+		  device_id = :device_id AND
+			invalidated_at IS NULL
+	`)
+	if err != nil {
+		return nil, err
+	}
+
+	stmt.Get(&refreshToken, claims)
+	if refreshToken.ID == 0 {
+		return nil, fmt.Errorf("no refresh token found with user id %v and device id %s", claims.UserID, claims.DeviceID)
 	}
 
 	return &refreshToken, nil

@@ -13,7 +13,7 @@ import (
 func SetupRouting(e *echo.Echo) {
 	// Middleware
 	authenticated := middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtClaims{}))
-	//authenticatedWithRefreshToken := middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtRefreshTokenClaims{}))
+	authenticatedWithRefreshToken := middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtRefreshTokenClaims{}))
 
 	// Routes
 	routesAPI := e.Group("/api")
@@ -23,7 +23,7 @@ func SetupRouting(e *echo.Echo) {
 	routesSessions := routesAPI.Group("/session")
 	routesSessions.POST("/refresh", authenticated(echo.HandlerFunc(controllers.APISessionRefreshJWTToken)))
 	routesSessions.POST("/new", authenticated(echo.HandlerFunc(controllers.APISessionCreateRefreshToken)))
-	//routesSessions.POST("/authenticate", authenticatedWithRefreshToken(echo.HandlerFunc(controllers.APISessionAuthenticateWithRefreshToken)))
+	routesSessions.POST("/authenticate", authenticatedWithRefreshToken(echo.HandlerFunc(controllers.APISessionAuthenticateWithRefreshToken)))
 
 	routesLogs := routesAPI.Group("/logs")
 	routesLogs.Use(authenticated)

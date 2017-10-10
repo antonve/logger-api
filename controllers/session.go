@@ -130,8 +130,8 @@ func APISessionRefreshJWTToken(context echo.Context) error {
 	})
 }
 
-// APISessionNewJWTToken will provide a new JWT token for a user whose token has expired
-// but can provide a device id & refresh token to generate a new one
+// APISessionCreateRefreshToken will provide a refresh token that can be used
+// to issue a new JWT token after the last one was expired
 func APISessionCreateRefreshToken(context echo.Context) error {
 	// Get user to work with
 	user := getUser(context)
@@ -163,6 +163,55 @@ func APISessionCreateRefreshToken(context echo.Context) error {
 	// Send new refresh token to the user
 	return context.JSON(http.StatusOK, map[string]interface{}{
 		"refresh_token": jwtRefreshToken,
+	})
+}
+
+// APISessionAuthenticateWithRefreshToken will provide a new JWT token for a user
+// whose token has expired but can provide a refresh token to generate a new one
+func APISessionAuthenticateWithRefreshToken(context echo.Context) error {
+	// Get refresh token
+	refreshTokenClaims := getRefreshTokenClaims(context)
+	rawRefreshToken := context.Request().Header.Get("Authorization")
+	rawRefreshToken = rawRefreshToken[7:len(rawRefreshToken)]
+
+	// Check if refresh token is valid
+	refreshTokenCollection := models.RefreshTokenCollection{RefreshTokens: make([]models.RefreshToken, 0)}
+	refreshToken, err := refreshTokenCollection.GetByClaims(refreshTokenClaims)
+	if err != nil {
+		return ServeWithError(context, 500, err)
+	}
+
+	// We can't issue a JWT token when no valid token was found
+	if refreshToken == nil {
+		log.Println("attempted generating new JWT token with invalidated session")
+		return echo.ErrUnauthorized
+	}
+
+	// Check token contents
+	err = bcrypt.CompareHashAndPassword([]byte(refreshToken.RefreshToken), []byte(rawRefreshToken))
+	if err != nil {
+		log.Println(err)
+		return echo.ErrUnauthorized
+	}
+
+	// Get user data
+	userCollection := models.UserCollection{Users: make([]models.User, 0)}
+	dbUser, err := userCollection.Get(refreshTokenClaims.UserID)
+	if err != nil {
+		log.Println(err)
+		return echo.ErrUnauthorized
+	}
+
+	// Set custom claims
+	encodedToken, err := generateJWTToken(dbUser, refreshToken.ID)
+	if err != nil {
+		return ServeWithError(context, 500, err)
+	}
+
+	// Issue JWT token
+	return context.JSON(http.StatusOK, map[string]interface{}{
+		"token": encodedToken,
+		"user":  dbUser,
 	})
 }
 
