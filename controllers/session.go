@@ -132,8 +132,39 @@ func APISessionRefreshJWTToken(context echo.Context) error {
 
 // APISessionNewJWTToken will provide a new JWT token for a user whose token has expired
 // but can provide a device id & refresh token to generate a new one
-//func APISessionNewJWTToken(context echo.Context) error {
-//}
+func APISessionCreateRefreshToken(context echo.Context) error {
+	// Get user to work with
+	user := getUser(context)
+	if user == nil {
+		return ServeWithError(context, 500, fmt.Errorf("could not receive user"))
+	}
+
+	// Get device ID
+	refreshToken := &models.RefreshToken{}
+	err := context.Bind(refreshToken)
+	if err != nil {
+		return ServeWithError(context, 500, err)
+	}
+	refreshToken.UserID = user.ID
+
+	// Generate new token
+	jwtRefreshToken, err := refreshToken.GenerateRefreshToken()
+	if err != nil {
+		return ServeWithError(context, 500, err)
+	}
+
+	// Create refresh token
+	refreshTokenCollection := models.RefreshTokenCollection{RefreshTokens: make([]models.RefreshToken, 0)}
+	_, err = refreshTokenCollection.Add(refreshToken)
+	if err != nil {
+		return ServeWithError(context, 500, err)
+	}
+
+	// Send new refresh token to the user
+	return context.JSON(http.StatusOK, map[string]interface{}{
+		"refresh_token": jwtRefreshToken,
+	})
+}
 
 // APISessionRegister registers new user
 func APISessionRegister(context echo.Context) error {

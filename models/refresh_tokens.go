@@ -5,8 +5,20 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/antonve/logger-api/config"
 	"github.com/lib/pq"
+
+	"golang.org/x/crypto/bcrypt"
+
+	jwt "github.com/dgrijalva/jwt-go"
 )
+
+// JwtRefreshTokenClaims json web token claim for refresh token
+type JwtRefreshTokenClaims struct {
+	UserID   uint64 `json:"user_id"`
+	DeviceID string `json:"device_id"`
+	jwt.StandardClaims
+}
 
 // RefreshTokenCollection array of refresh tokens
 type RefreshTokenCollection struct {
@@ -22,6 +34,37 @@ type RefreshToken struct {
 	CreatedAt     time.Time   `json:"created_at" db:"created_at"`
 	UpdatedAt     time.Time   `json:"updated_at" db:"updated_at"`
 	InvalidatedAt pq.NullTime `json:"invalidated_at" db:"invalidated_at"`
+}
+
+// GenerateRefreshToken generates a new refresh  token that's valid for one year
+// for a given user and device and returns the signed JWT token
+func (refreshToken *RefreshToken) GenerateRefreshToken() (string, error) {
+	// Set claims
+	claims := JwtRefreshTokenClaims{
+		refreshToken.UserID,
+		refreshToken.DeviceID,
+		jwt.StandardClaims{
+			// Duration of 1 year
+			ExpiresAt: time.Now().Add(time.Hour * 24 * 365).Unix(),
+		},
+	}
+
+	// Create token with claims
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err := token.SignedString([]byte(config.GetConfig().JWTKey))
+	if err != nil {
+		return "", err
+	}
+
+	// Hash signed token to store in DB
+	hashedToken, err := bcrypt.GenerateFromPassword([]byte(signedToken), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+
+	refreshToken.RefreshToken = string(hashedToken)
+
+	return signedToken, nil
 }
 
 // Length returns the amount of refresh tokens in the collection
