@@ -129,21 +129,42 @@ func (refreshTokenCollection *RefreshTokenCollection) Add(refreshToken *RefreshT
 	db := GetDatabase()
 	defer db.Close()
 
-	query := `
+	// We must do the invalidation and creation of new tokens in a transaction
+	// to make sure we don't leave the DB in a bad state if we crash
+	tx, err := db.Beginx()
+
+	// Invalidate older refresh tokens with the combination user_id, device_id
+	invalidationQuery := `
+		UPDATE refresh_tokens
+		SET invalidated_at = NOW()
+		WHERE
+			user_id = :user_id AND
+			device_id = :device_id AND
+			invalidated_at IS NULL
+	`
+	_, err = tx.NamedExec(invalidationQuery, refreshToken)
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+
+	// Insert new token
+	insertQuery := `
 		INSERT INTO refresh_tokens (user_id, device_id, refresh_token)
-		VALUES (:user_id, :device_id, :refresh_token)
+		VALUES ($1, $2, $3)
 		RETURNING id
 	`
-	rows, err := db.NamedQuery(query, refreshToken)
+	err = tx.QueryRowx(insertQuery, refreshToken.UserID, refreshToken.DeviceID, refreshToken.RefreshToken).Scan(&refreshToken.ID)
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
 
+	// Commit transaction
+	err = tx.Commit()
 	if err != nil {
 		return 0, err
 	}
 
-	var id uint64
-	if rows.Next() {
-		rows.Scan(&id)
-	}
-
-	return id, nil
+	return refreshToken.ID, nil
 }
