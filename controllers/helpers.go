@@ -48,6 +48,20 @@ func getUser(context echo.Context) *models.User {
 	return claims.(*models.JwtClaims).User
 }
 
+func getRefreshTokenClaims(context echo.Context) *models.JwtRefreshTokenClaims {
+	token := context.Get("user")
+	if token == nil {
+		return nil
+	}
+
+	claims := token.(*jwt.Token).Claims
+	if claims == nil {
+		return nil
+	}
+
+	return claims.(*models.JwtRefreshTokenClaims)
+}
+
 func handleError(err error) {
 	log.Println(err.Error())
 
