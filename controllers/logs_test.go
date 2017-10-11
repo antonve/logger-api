@@ -27,7 +27,7 @@ var mockUser *models.User
 
 func init() {
 	utils.SetupTesting()
-	mockJwtToken, mockUser = utils.SetupTestUser()
+	mockJwtToken, mockUser = utils.SetupTestUser("logs_test")
 }
 
 func TestPost(t *testing.T) {
