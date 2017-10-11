@@ -51,22 +51,20 @@ func TestCreateUser(t *testing.T) {
 	}
 }
 
-//func TestCreateInvalidUser(t *testing.T) {
-//// Setup registration request
-//e := echo.New()
-//req, err := http.NewRequest(echo.POST, "/api/register", strings.NewReader(`{"email": "register_test@invalid##", "display_name": "invalid", "password": "password"}`))
-//if !assert.NoError(t, err) {
-//return
-//}
-//req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-//rec := httptest.NewRecorder()
-//c := e.NewContext(req, rec)
+func TestCreateInvalidUser(t *testing.T) {
+	// Setup registration request
+	e := echo.New()
+	req, err := http.NewRequest(echo.POST, "/api/register", strings.NewReader(`{"email": "register_test@invalid##", "display_name": "invalid", "password": "password"}`))
+	assert.Nil(t, err)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
 
-//if assert.NoError(t, controllers.APISessionRegister(c)) {
-//assert.Equal(t, http.StatusBadRequest, rec.Code)
-//assert.NotEqual(t, `{"success": true}`, rec.Body.String())
-//}
-//}
+	if assert.NoError(t, controllers.APISessionRegister(c)) {
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.NotEqual(t, `{"success": true}`, rec.Body.String())
+	}
+}
 
 func TestLoginUser(t *testing.T) {
 	// Setup user to test login with
