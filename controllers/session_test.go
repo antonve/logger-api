@@ -24,6 +24,10 @@ type LoginBody struct {
 	User  models.User `json:"user"`
 }
 
+type RefreshTokenBody struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
 var mockJwtToken string
 var mockUser *models.User
 
@@ -107,7 +111,7 @@ func TestLoginUser(t *testing.T) {
 func TestRefreshJWTToken(t *testing.T) {
 	// Setup refresh request
 	e := echo.New()
-	req, err := http.NewRequest(echo.POST, "/api/refresh", nil)
+	req, err := http.NewRequest(echo.POST, "/api/session/refresh", nil)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -125,5 +129,33 @@ func TestRefreshJWTToken(t *testing.T) {
 		// Check if the user has information
 		assert.Nil(t, err)
 		assert.NotEmpty(t, body.Token)
+
+		// Might want to check if the new token is usable
+	}
+}
+
+func TestCreateRefreshToken(t *testing.T) {
+	// Setup refresh request
+	e := echo.New()
+	req, err := http.NewRequest(echo.POST, "/api/session/new", strings.NewReader(`{"device_id": "6db435f352d7ea4a67807a3feb447bf7"}`))
+	if !assert.NoError(t, err) {
+		return
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	if assert.NoError(t, middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtClaims{}))(controllers.APISessionCreateRefreshToken)(c)) {
+		// Check login response
+		var body RefreshTokenBody
+		assert.Equal(t, http.StatusOK, rec.Code)
+		err = json.Unmarshal(rec.Body.Bytes(), &body)
+
+		// Check if the user has information
+		assert.Nil(t, err)
+		assert.NotEmpty(t, body.RefreshToken)
+
+		// Might want to check if the new token is usable
 	}
 }
