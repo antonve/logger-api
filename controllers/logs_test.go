@@ -46,9 +46,7 @@ func TestPost(t *testing.T) {
     }
   }`)
 	req, err := http.NewRequest(echo.POST, "/api/logs", logBody)
-	if !assert.NoError(t, err) {
-		return
-	}
+	assert.Nil(t, err)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
 	rec := httptest.NewRecorder()

@@ -40,9 +40,7 @@ func TestCreateUser(t *testing.T) {
 	// Setup registration request
 	e := echo.New()
 	req, err := http.NewRequest(echo.POST, "/api/register", strings.NewReader(`{"email": "register_test@example.com", "display_name": "logger", "password": "password"}`))
-	if !assert.NoError(t, err) {
-		return
-	}
+	assert.Nil(t, err)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -80,9 +78,7 @@ func TestLoginUser(t *testing.T) {
 	// Setup login request
 	e := echo.New()
 	req, err := http.NewRequest(echo.POST, "/api/login", strings.NewReader(`{"email": "login_test@example.com", "password": "password"}`))
-	if !assert.NoError(t, err) {
-		return
-	}
+	assert.Nil(t, err)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -112,9 +108,7 @@ func TestRefreshJWTToken(t *testing.T) {
 	// Setup refresh request
 	e := echo.New()
 	req, err := http.NewRequest(echo.POST, "/api/session/refresh", nil)
-	if !assert.NoError(t, err) {
-		return
-	}
+	assert.Nil(t, err)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -138,9 +132,7 @@ func TestCreateRefreshToken(t *testing.T) {
 	// Setup refresh request
 	e := echo.New()
 	req, err := http.NewRequest(echo.POST, "/api/session/new", strings.NewReader(`{"device_id": "6db435f352d7ea4a67807a3feb447bf7"}`))
-	if !assert.NoError(t, err) {
-		return
-	}
+	assert.Nil(t, err)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
