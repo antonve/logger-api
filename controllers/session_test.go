@@ -159,3 +159,35 @@ func TestCreateRefreshToken(t *testing.T) {
 		// Might want to check if the new token is usable
 	}
 }
+
+func TestAuthenticateWithRefreshToken(t *testing.T) {
+	// Setup refresh token
+	refreshToken := models.RefreshToken{UserID: mockUser.ID, DeviceID: "6db435f352d7ea4a67807a3feb447666"}
+	jwtRefreshToken, err := refreshToken.GenerateRefreshToken()
+	assert.Nil(t, err)
+	refreshTokenCollection := models.RefreshTokenCollection{RefreshTokens: make([]models.RefreshToken, 0)}
+	_, err = refreshTokenCollection.Add(&refreshToken)
+	assert.Nil(t, err)
+
+	// Setup authentication request
+	e := echo.New()
+	req, err := http.NewRequest(echo.POST, "/api/session/authenticate", strings.NewReader(`{"device_id": "6db435f352d7ea4a67807a3feb447666"}`))
+	assert.Nil(t, err)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", jwtRefreshToken))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	if assert.NoError(t, middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtRefreshTokenClaims{}))(controllers.APISessionAuthenticateWithRefreshToken)(c)) {
+		// Check login response
+		var body LoginBody
+		assert.Equal(t, http.StatusOK, rec.Code)
+		err = json.Unmarshal(rec.Body.Bytes(), &body)
+
+		// Check if the user has information
+		assert.Nil(t, err)
+		assert.NotEmpty(t, body.Token)
+
+		// Might want to check if the new token is usable
+	}
+}
