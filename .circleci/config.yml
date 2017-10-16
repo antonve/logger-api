@@ -13,7 +13,7 @@ jobs:
 
     working_directory: /go/src/github.com/antonve/logger-api
     steps:
-      - run: checkout
+      - checkout
       - restore_cache:
           keys:
               - glide-cache-{{ checksum "glide.lock" }}
