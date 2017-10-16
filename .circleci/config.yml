@@ -10,6 +10,11 @@ jobs:
     docker:
       # specify the version
       - image: circleci/golang:1.8
+      - image: circleci/postgres:9.6.5-alpine-ram
+        environment:
+          POSTGRES_USER: ubuntu
+          POSTGRES_DB: circle_test
+          POSTGRES_PASSWORD: ""
 
     working_directory: /go/src/github.com/antonve/logger-api
     steps:
