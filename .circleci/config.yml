@@ -13,10 +13,25 @@ jobs:
 
     working_directory: /go/src/github.com/antonve/logger-api
     steps:
-      - run: sudo add-apt-repository ppa:masterminds/glide -y
-      - run: sudo apt-get update
-      - run: sudo apt-get install glide -y
       - run: checkout
+      - restore_cache:
+          keys:
+              - glide-cache-{{ checksum "glide.lock" }}
+      - run:
+          name: Install dependencies if not cached
+          command: |
+              if [ -d ./vendor ]; then
+                  echo "vendor directory found"
+              else
+                  echo "vendor directory not found"
+                  sudo apt-get install -y curl
+                  curl https://glide.sh/get | sh
+                  glide install
+              fi
+      - save_cache:
+          key: glide-cache-{{ checksum "glide.lock" }}
+          paths:
+              - vendor
       - run: cp "$APP_PATH/config/test.yml.ci" "$APP_PATH/config/test.yml"
       - run: cd "$APP_PATH" && glide install
       - run: go test -cover $(glide nv)
