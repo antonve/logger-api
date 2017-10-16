@@ -1,5 +1,7 @@
 # logger-api
 
+[![CircleCI](https://circleci.com/gh/antonve/logger-api/tree/master.svg?style=svg)](https://circleci.com/gh/antonve/logger-api/tree/master)
+
 ## Setup
 - Install glide: https://github.com/Masterminds/glide
 - Install dependencies
