@@ -32,6 +32,9 @@ jobs:
           key: glide-cache-{{ checksum "glide.lock" }}
           paths:
               - vendor
-      - run: cp "$APP_PATH/config/test.yml.ci" "$APP_PATH/config/test.yml"
-      - run: cd "$APP_PATH" && glide install
-      - run: go test -cover $(glide nv)
+      - run:
+          name: Copy configuration
+          command: cp config/test.yml.ci config/test.yml
+      - run:
+          name: Run tests
+          command: go test -cover $(glide nv)
