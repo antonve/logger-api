@@ -67,13 +67,23 @@ func APIUserUpdate(context echo.Context) error {
 	}
 	user.ID = id
 
-	currentUser := context.Get("currentUser").(*jwt.Token).Claims.(*models.JwtClaims).User
+	currentUser := getUser(context)
 	if !(currentUser != nil && (currentUser.ID == id || currentUser.Role == enums.RoleAdmin)) {
 		return ServeWithError(context, 403, fmt.Errorf("not allowed to access this user"))
 	}
 
+	// Return an error when an unauthorized request to change role was made
+	if user.Role != enums.RoleAdmin && user.Role != "" {
+		return ServeWithError(context, 403, fmt.Errorf("not allowed to change the user role"))
+	}
+
+	if user.Role == "" {
+		user.Role = currentUser.Role
+	}
+
 	// Update
 	userCollection := models.UserCollection{}
+	fmt.Println(user)
 	err = userCollection.Update(user)
 	if err != nil {
 		return ServeWithError(context, 500, err)

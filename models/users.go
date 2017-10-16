@@ -49,6 +49,9 @@ func (preferences Preferences) Scan(src interface{}) error {
 	}
 
 	if data, ok := src.([]byte); ok {
+		var test []interface{}
+		json.Unmarshal(data, &test)
+		fmt.Println(test)
 		return json.Unmarshal(data, &preferences)
 	}
 
