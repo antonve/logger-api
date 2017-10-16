@@ -36,9 +36,28 @@ type RefreshToken struct {
 	InvalidatedAt pq.NullTime `json:"invalidated_at" db:"invalidated_at"`
 }
 
+func (refreshToken *RefreshToken) GenerateRefreshToken() error {
+	// Generate new token
+	jwtRefreshToken, err := refreshToken.GenerateRefreshTokenString()
+	if err != nil {
+		return err
+	}
+
+	// Create refresh token
+	refreshTokenCollection := RefreshTokenCollection{RefreshTokens: make([]RefreshToken, 0)}
+	_, err = refreshTokenCollection.Add(refreshToken)
+	if err != nil {
+		return err
+	}
+
+	refreshToken.RefreshToken = jwtRefreshToken
+
+	return nil
+}
+
 // GenerateRefreshToken generates a new refresh  token that's valid for one year
 // for a given user and device and returns the signed JWT token
-func (refreshToken *RefreshToken) GenerateRefreshToken() (string, error) {
+func (refreshToken *RefreshToken) GenerateRefreshTokenString() (string, error) {
 	// Set claims
 	claims := JwtRefreshTokenClaims{
 		refreshToken.UserID,

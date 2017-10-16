@@ -19,37 +19,54 @@ import (
 
 // APISessionLogin checks if user exists in database and returns jwt token if valid
 func APISessionLogin(context echo.Context) error {
-	// Attempt to bind request to User struct
-	user := &models.User{}
-	err := context.Bind(user)
+	type LoginBody struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		DeviceID string `json:"device_id"`
+	}
+
+	// Attempt to bind request to LoginBody struct
+	loginBody := &LoginBody{}
+	err := context.Bind(loginBody)
 	if err != nil {
 		return ServeWithError(context, 500, err)
 	}
 
 	// Get authentication data
 	userCollection := models.UserCollection{Users: make([]models.User, 0)}
-	dbUser, err := userCollection.GetAuthenticationData(user.Email)
+	user, err := userCollection.GetAuthenticationData(loginBody.Email)
 	if err != nil {
-		log.Println(err)
 		return echo.ErrUnauthorized
 	}
 
 	// Compare passwords
-	err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(user.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginBody.Password))
 	if err != nil {
-		log.Println(err)
 		return echo.ErrUnauthorized
 	}
 
 	// Set custom claims
-	encodedToken, err := generateJWTToken(dbUser, 0)
+	encodedToken, err := generateJWTToken(user, 0)
+	if err != nil {
+		return ServeWithError(context, 500, err)
+	}
+
+	// Get device ID
+	refreshToken := &models.RefreshToken{}
+	refreshToken.UserID = user.ID
+	refreshToken.DeviceID = loginBody.DeviceID
+
+	// Create and save a refresh token
+	// This should only be done during login as this is the only place where we validate credentials
+	err = refreshToken.GenerateRefreshToken()
 	if err != nil {
 		return ServeWithError(context, 500, err)
 	}
 
 	return context.JSON(http.StatusOK, map[string]interface{}{
-		"token": encodedToken,
-		"user":  dbUser,
+		"token":         encodedToken,
+		"refresh_token": refreshToken.RefreshToken,
+		"user":          user,
 	})
 }
 
@@ -127,42 +144,6 @@ func APISessionRefreshJWTToken(context echo.Context) error {
 	return context.JSON(http.StatusOK, map[string]interface{}{
 		"token": encodedToken,
 		"user":  dbUser,
-	})
-}
-
-// APISessionCreateRefreshToken will provide a refresh token that can be used
-// to issue a new JWT token after the last one was expired
-func APISessionCreateRefreshToken(context echo.Context) error {
-	// Get user to work with
-	user := getUser(context)
-	if user == nil {
-		return ServeWithError(context, 500, fmt.Errorf("could not receive user"))
-	}
-
-	// Get device ID
-	refreshToken := &models.RefreshToken{}
-	err := context.Bind(refreshToken)
-	if err != nil {
-		return ServeWithError(context, 500, err)
-	}
-	refreshToken.UserID = user.ID
-
-	// Generate new token
-	jwtRefreshToken, err := refreshToken.GenerateRefreshToken()
-	if err != nil {
-		return ServeWithError(context, 500, err)
-	}
-
-	// Create refresh token
-	refreshTokenCollection := models.RefreshTokenCollection{RefreshTokens: make([]models.RefreshToken, 0)}
-	_, err = refreshTokenCollection.Add(refreshToken)
-	if err != nil {
-		return ServeWithError(context, 500, err)
-	}
-
-	// Send new refresh token to the user
-	return context.JSON(http.StatusOK, map[string]interface{}{
-		"refresh_token": jwtRefreshToken,
 	})
 }
 
