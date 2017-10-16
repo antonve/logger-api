@@ -37,4 +37,4 @@ jobs:
           command: cp config/test.yml.ci config/test.yml
       - run:
           name: Run tests
-          command: go test -cover $(glide nv)
+          command: go test -cover $(go list ./... | grep -v /vendor/)
