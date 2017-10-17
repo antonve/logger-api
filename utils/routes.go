@@ -11,12 +11,21 @@ import (
 
 // SetupRouting Define all routes here
 func SetupRouting(e *echo.Echo) {
+	// Middleware
+	authenticated := middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtClaims{}))
+	authenticatedWithRefreshToken := middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtRefreshTokenClaims{}))
+
+	// Routes
 	routesAPI := e.Group("/api")
-	routesAPI.POST("/login", echo.HandlerFunc(controllers.APIUserLogin))
-	routesAPI.POST("/register", echo.HandlerFunc(controllers.APIUserRegister))
+	routesAPI.POST("/login", echo.HandlerFunc(controllers.APISessionLogin))
+	routesAPI.POST("/register", echo.HandlerFunc(controllers.APISessionRegister))
+
+	routesSessions := routesAPI.Group("/session")
+	routesSessions.POST("/refresh", authenticated(echo.HandlerFunc(controllers.APISessionRefreshJWTToken)))
+	routesSessions.POST("/authenticate", authenticatedWithRefreshToken(echo.HandlerFunc(controllers.APISessionAuthenticateWithRefreshToken)))
 
 	routesLogs := routesAPI.Group("/logs")
-	routesLogs.Use(middleware.JWTWithConfig(config.GetJWTConfig(&models.JwtClaims{})))
+	routesLogs.Use(authenticated)
 	routesLogs.GET("", echo.HandlerFunc(controllers.APILogsGetAll))
 	routesLogs.POST("", echo.HandlerFunc(controllers.APILogsPost))
 	routesLogs.GET("/:id", echo.HandlerFunc(controllers.APILogsGetByID))

@@ -28,7 +28,8 @@ type User struct {
 
 // JwtClaims json web token claim
 type JwtClaims struct {
-	User *User `json:"user"`
+	User           *User  `json:"user"`
+	RefreshTokenID uint64 `json:"refresh_token_id"`
 	jwt.StandardClaims
 }
 

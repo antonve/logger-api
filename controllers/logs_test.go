@@ -22,12 +22,12 @@ type LogsBody struct {
 	Logs []models.Log `json:"logs"`
 }
 
-var mockJwtToken string
-var mockUser *models.User
+var mockLogsJwtToken string
+var mockLogsUser *models.User
 
 func init() {
 	utils.SetupTesting()
-	mockJwtToken, mockUser = utils.SetupTestUser()
+	mockLogsJwtToken, mockLogsUser = utils.SetupTestUser("logs_test")
 }
 
 func TestPost(t *testing.T) {
@@ -46,11 +46,9 @@ func TestPost(t *testing.T) {
     }
   }`)
 	req, err := http.NewRequest(echo.POST, "/api/logs", logBody)
-	if !assert.NoError(t, err) {
-		return
-	}
+	assert.Nil(t, err)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockLogsJwtToken))
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
@@ -62,7 +60,7 @@ func TestPost(t *testing.T) {
 
 func TestGetByID(t *testing.T) {
 	// Setup log to grab
-	log := models.Log{UserID: mockUser.ID, Language: enums.LanguageKorean, Date: "2016-10-05", Duration: 60, Activity: enums.ActivityListening}
+	log := models.Log{UserID: mockLogsUser.ID, Language: enums.LanguageKorean, Date: "2016-10-05", Duration: 60, Activity: enums.ActivityListening}
 	logCollection := models.LogCollection{}
 	id, _ := logCollection.Add(&log)
 
@@ -71,7 +69,7 @@ func TestGetByID(t *testing.T) {
 	req := httptest.NewRequest(echo.GET, fmt.Sprintf("/api/logs/%d", id), nil)
 
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockLogsJwtToken))
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetPath("/api/logs/:id")
@@ -103,16 +101,16 @@ func TestGetAll(t *testing.T) {
 	// Setup log to grab
 	logCollection := models.LogCollection{}
 	var ids [3]uint64
-	ids[0], _ = logCollection.Add(&models.Log{UserID: mockUser.ID, Language: enums.LanguageJapanese, Date: "2016-04-04", Duration: 30, Activity: enums.ActivityGrammar})
-	ids[1], _ = logCollection.Add(&models.Log{UserID: mockUser.ID, Language: enums.LanguageMandarin, Date: "2016-04-03", Duration: 45, Activity: enums.ActivityOther})
-	ids[2], _ = logCollection.Add(&models.Log{UserID: mockUser.ID, Language: enums.LanguageKorean, Date: "2016-04-05", Duration: 55, Activity: enums.ActivityTextbook})
+	ids[0], _ = logCollection.Add(&models.Log{UserID: mockLogsUser.ID, Language: enums.LanguageJapanese, Date: "2016-04-04", Duration: 30, Activity: enums.ActivityGrammar})
+	ids[1], _ = logCollection.Add(&models.Log{UserID: mockLogsUser.ID, Language: enums.LanguageMandarin, Date: "2016-04-03", Duration: 45, Activity: enums.ActivityOther})
+	ids[2], _ = logCollection.Add(&models.Log{UserID: mockLogsUser.ID, Language: enums.LanguageKorean, Date: "2016-04-05", Duration: 55, Activity: enums.ActivityTextbook})
 
 	// Setup log request
 	e := echo.New()
 
 	req := httptest.NewRequest(echo.GET, "/api/logs", nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockLogsJwtToken))
 
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -133,7 +131,7 @@ func TestGetAll(t *testing.T) {
 	// By date
 	req = httptest.NewRequest(echo.GET, "/api/logs?date=2016-04-03", nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockLogsJwtToken))
 
 	rec = httptest.NewRecorder()
 	c = e.NewContext(req, rec)
@@ -153,7 +151,7 @@ func TestGetAll(t *testing.T) {
 	// By daterange
 	req = httptest.NewRequest(echo.GET, "/api/logs?from=2016-04-01&until=2016-04-04", nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockLogsJwtToken))
 
 	rec = httptest.NewRecorder()
 	c = e.NewContext(req, rec)
@@ -173,7 +171,7 @@ func TestGetAll(t *testing.T) {
 	// By language
 	req = httptest.NewRequest(echo.GET, "/api/logs?language=JA", nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockLogsJwtToken))
 
 	rec = httptest.NewRecorder()
 	c = e.NewContext(req, rec)
@@ -198,7 +196,7 @@ func TestGetAllPagination(t *testing.T) {
 	logCollection := models.LogCollection{}
 	var ids [35]uint64
 	for key := 0; key < 31; key++ {
-		ids[key], _ = logCollection.Add(&models.Log{UserID: mockUser.ID, Language: enums.LanguageJapanese, Date: fmt.Sprintf("2016-07-%d", key+1), Duration: 30, Activity: enums.ActivityGrammar})
+		ids[key], _ = logCollection.Add(&models.Log{UserID: mockLogsUser.ID, Language: enums.LanguageJapanese, Date: fmt.Sprintf("2016-07-%d", key+1), Duration: 30, Activity: enums.ActivityGrammar})
 	}
 
 	// Setup log request
@@ -207,7 +205,7 @@ func TestGetAllPagination(t *testing.T) {
 	// Page 1
 	req := httptest.NewRequest(echo.GET, "/api/logs?page=1", nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockLogsJwtToken))
 
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -233,7 +231,7 @@ func TestGetAllPagination(t *testing.T) {
 	// Page 2
 	req = httptest.NewRequest(echo.GET, "/api/logs?page=2", nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockLogsJwtToken))
 
 	rec = httptest.NewRecorder()
 	c = e.NewContext(req, rec)
@@ -260,7 +258,7 @@ func TestGetAllPagination(t *testing.T) {
 	// Page 9000
 	req = httptest.NewRequest(echo.GET, "/api/logs?page=9000", nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockLogsJwtToken))
 
 	rec = httptest.NewRecorder()
 	c = e.NewContext(req, rec)
@@ -287,7 +285,7 @@ func TestGetAllPagination(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	// Setup log to grab
 	logCollection := models.LogCollection{}
-	id, _ := logCollection.Add(&models.Log{UserID: mockUser.ID, Language: enums.LanguageGerman, Date: "2016-03-30", Duration: 5, Activity: enums.ActivityTranslation})
+	id, _ := logCollection.Add(&models.Log{UserID: mockLogsUser.ID, Language: enums.LanguageGerman, Date: "2016-03-30", Duration: 5, Activity: enums.ActivityTranslation})
 
 	// Setup log request
 	e := echo.New()
@@ -300,7 +298,7 @@ func TestUpdate(t *testing.T) {
 	req := httptest.NewRequest(echo.PUT, fmt.Sprintf("/api/logs/%d", id), logBody)
 
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockLogsJwtToken))
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetPath("/api/logs/:id")
@@ -323,14 +321,14 @@ func TestUpdate(t *testing.T) {
 func TestDelete(t *testing.T) {
 	// Setup log to grab
 	logCollection := models.LogCollection{}
-	id, _ := logCollection.Add(&models.Log{UserID: mockUser.ID, Language: enums.LanguageJapanese, Date: "2016-01-30", Duration: 50, Activity: enums.ActivityFlashcards})
+	id, _ := logCollection.Add(&models.Log{UserID: mockLogsUser.ID, Language: enums.LanguageJapanese, Date: "2016-01-30", Duration: 50, Activity: enums.ActivityFlashcards})
 
 	// Setup log request
 	e := echo.New()
 	req := httptest.NewRequest(echo.DELETE, fmt.Sprintf("/api/logs/%d", id), nil)
 
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockJwtToken))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockLogsJwtToken))
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetPath("/api/logs/:id")

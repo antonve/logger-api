@@ -26,13 +26,14 @@ func SetupTesting() {
 }
 
 // SetupTestUser a mock user for testing
-func SetupTestUser() (string, *models.User) {
+func SetupTestUser(name string) (string, *models.User) {
 	user := &models.User{
-		Email:       "mock_email@example.com",
-		DisplayName: "mock_name",
+		Email:       fmt.Sprintf("test_%s@example.com", name),
+		DisplayName: fmt.Sprintf("mock_%s", name),
 		Password:    "mock_password",
 		Role:        enums.RoleUser,
 	}
+	user.HashPassword()
 
 	// Get authentication data
 	userCollection := models.UserCollection{Users: make([]models.User, 0)}
@@ -50,8 +51,9 @@ func SetupTestUser() (string, *models.User) {
 	dbUser.Password = ""
 	claims := models.JwtClaims{
 		dbUser,
+		0,
 		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
+			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(),
 		},
 	}
 
