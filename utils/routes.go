@@ -22,7 +22,6 @@ func SetupRouting(e *echo.Echo) {
 
 	routesSessions := routesAPI.Group("/session")
 	routesSessions.POST("/refresh", authenticated(echo.HandlerFunc(controllers.APISessionRefreshJWTToken)))
-	routesSessions.POST("/new", authenticated(echo.HandlerFunc(controllers.APISessionCreateRefreshToken)))
 	routesSessions.POST("/authenticate", authenticatedWithRefreshToken(echo.HandlerFunc(controllers.APISessionAuthenticateWithRefreshToken)))
 
 	routesLogs := routesAPI.Group("/logs")
