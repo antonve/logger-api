@@ -25,18 +25,23 @@ type LoginBody struct {
 	RefreshToken string      `json:"refresh_token"`
 }
 
+type RefreshTokenBody struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
+var mockSessionJwtToken string
 var mockSessionToken string
 var mockSessionUser *models.User
 
 func init() {
 	utils.SetupTesting()
-	mockSessionToken, mockSessionUser = utils.SetupTestUser("session_test")
+	mockSessionJwtToken, mockSessionUser = utils.SetupTestUser("session_test")
 }
 
-func TestCreateUser(t *testing.T) {
+func TestSessionCreateUser(t *testing.T) {
 	// Setup registration request
 	e := echo.New()
-	req, err := http.NewRequest(echo.POST, "/api/register", strings.NewReader(`{"email": "register_test@example.com", "display_name": "logger", "password": "password"}`))
+	req, err := http.NewRequest(echo.POST, "/api/register", strings.NewReader(`{"email": "register_test@example.com", "display_name": "logger", "password": "password", "preferences": { "languages": ["JA", "DE", "ZH", "KR"], "public_profile": false }}`))
 	assert.Nil(t, err)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -48,7 +53,7 @@ func TestCreateUser(t *testing.T) {
 	}
 }
 
-func TestCreateInvalidUser(t *testing.T) {
+func TestSessionCreateInvalidUser(t *testing.T) {
 	// Setup registration request
 	e := echo.New()
 	req, err := http.NewRequest(echo.POST, "/api/register", strings.NewReader(`{"email": "register_test@invalid##", "display_name": "invalid", "password": "password"}`))
@@ -63,7 +68,7 @@ func TestCreateInvalidUser(t *testing.T) {
 	}
 }
 
-func TestLoginUser(t *testing.T) {
+func TestSessionLoginUser(t *testing.T) {
 	// Setup user to test login with
 	user := models.User{Email: "login_test@example.com", DisplayName: "logger_user", Password: "password", Role: enums.RoleAdmin}
 	user.HashPassword()
@@ -100,12 +105,12 @@ func TestLoginUser(t *testing.T) {
 	}
 }
 
-func TestRefreshJWTToken(t *testing.T) {
+func TestSessionRefreshJWTToken(t *testing.T) {
 	// Setup refresh request
 	e := echo.New()
 	req, err := http.NewRequest(echo.POST, "/api/session/refresh", nil)
 	assert.Nil(t, err)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockSessionToken))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", mockSessionJwtToken))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -124,7 +129,7 @@ func TestRefreshJWTToken(t *testing.T) {
 	}
 }
 
-func TestAuthenticateWithRefreshToken(t *testing.T) {
+func TestSessionAuthenticateWithRefreshToken(t *testing.T) {
 	// Setup refresh token
 	refreshToken := models.RefreshToken{UserID: mockSessionUser.ID, DeviceID: "6db435f352d7ea4a67807a3feb447666"}
 	jwtRefreshToken, err := refreshToken.GenerateRefreshTokenString()

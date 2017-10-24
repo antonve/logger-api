@@ -6,7 +6,9 @@ import (
 	"strconv"
 
 	"github.com/antonve/logger-api/models"
+	"github.com/antonve/logger-api/models/enums"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 )
 
@@ -31,13 +33,18 @@ func APIUserGetByID(context echo.Context) error {
 		return ServeWithError(context, 500, err)
 	}
 
+	currentUser := context.Get("currentUser").(*jwt.Token).Claims.(*models.JwtClaims).User
+	if !(currentUser != nil && (currentUser.ID == id || currentUser.Role == enums.RoleAdmin)) {
+		return ServeWithError(context, 403, fmt.Errorf("not allowed to access this user"))
+	}
+
 	user, err := userCollection.Get(id)
 	if err != nil {
 		return ServeWithError(context, 500, err)
 	}
 
 	if user == nil {
-		return ServeWithError(context, 404, fmt.Errorf("No User found with id %v", id))
+		return ServeWithError(context, 404, fmt.Errorf("no User found with id %v", id))
 	}
 
 	return context.JSON(http.StatusOK, user)
@@ -59,6 +66,20 @@ func APIUserUpdate(context echo.Context) error {
 		return ServeWithError(context, 500, err)
 	}
 	user.ID = id
+
+	currentUser := getUser(context)
+	if !(currentUser != nil && (currentUser.ID == id || currentUser.Role == enums.RoleAdmin)) {
+		return ServeWithError(context, 403, fmt.Errorf("not allowed to access this user"))
+	}
+
+	// Return an error when an unauthorized request to change role was made
+	if user.Role != enums.RoleAdmin && user.Role != "" {
+		return ServeWithError(context, 403, fmt.Errorf("not allowed to change the user role"))
+	}
+
+	if user.Role == "" {
+		user.Role = currentUser.Role
+	}
 
 	// Update
 	userCollection := models.UserCollection{}

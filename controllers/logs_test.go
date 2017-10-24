@@ -30,7 +30,7 @@ func init() {
 	mockLogsJwtToken, mockLogsUser = utils.SetupTestUser("logs_test")
 }
 
-func TestPost(t *testing.T) {
+func TestLogPost(t *testing.T) {
 	// Setup create log request
 	e := echo.New()
 	logBody := strings.NewReader(`{
@@ -58,7 +58,7 @@ func TestPost(t *testing.T) {
 	}
 }
 
-func TestGetByID(t *testing.T) {
+func TestLogGetByID(t *testing.T) {
 	// Setup log to grab
 	log := models.Log{UserID: mockLogsUser.ID, Language: enums.LanguageKorean, Date: "2016-10-05", Duration: 60, Activity: enums.ActivityListening}
 	logCollection := models.LogCollection{}
@@ -97,7 +97,7 @@ func TestGetByID(t *testing.T) {
 	}
 }
 
-func TestGetAll(t *testing.T) {
+func TestLogGetAll(t *testing.T) {
 	// Setup log to grab
 	logCollection := models.LogCollection{}
 	var ids [3]uint64
@@ -191,7 +191,7 @@ func TestGetAll(t *testing.T) {
 	}
 }
 
-func TestGetAllPagination(t *testing.T) {
+func TestLogGetAllPagination(t *testing.T) {
 	// Setup log to grab
 	logCollection := models.LogCollection{}
 	var ids [35]uint64
@@ -282,7 +282,7 @@ func TestGetAllPagination(t *testing.T) {
 	}
 }
 
-func TestUpdate(t *testing.T) {
+func TestLogUpdate(t *testing.T) {
 	// Setup log to grab
 	logCollection := models.LogCollection{}
 	id, _ := logCollection.Add(&models.Log{UserID: mockLogsUser.ID, Language: enums.LanguageGerman, Date: "2016-03-30", Duration: 5, Activity: enums.ActivityTranslation})
@@ -318,7 +318,7 @@ func TestUpdate(t *testing.T) {
 	}
 }
 
-func TestDelete(t *testing.T) {
+func TestLogDelete(t *testing.T) {
 	// Setup log to grab
 	logCollection := models.LogCollection{}
 	id, _ := logCollection.Add(&models.Log{UserID: mockLogsUser.ID, Language: enums.LanguageJapanese, Date: "2016-01-30", Duration: 50, Activity: enums.ActivityFlashcards})

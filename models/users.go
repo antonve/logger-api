@@ -1,8 +1,11 @@
 package models
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 
 	"github.com/antonve/logger-api/models/enums"
 	"github.com/badoux/checkmail"
@@ -19,11 +22,39 @@ type UserCollection struct {
 
 // User model
 type User struct {
-	ID          uint64     `json:"id" db:"id"`
-	Email       string     `json:"email" db:"email"`
-	DisplayName string     `json:"display_name" db:"display_name"`
-	Password    string     `json:"password" db:"password"`
-	Role        enums.Role `json:"role" db:"role"`
+	ID          uint64      `json:"id" db:"id"`
+	Email       string      `json:"email" db:"email"`
+	DisplayName string      `json:"display_name" db:"display_name"`
+	Password    string      `json:"password" db:"password"`
+	Role        enums.Role  `json:"role" db:"role"`
+	Preferences Preferences `json:"preferences" db:"preferences"`
+}
+
+// Preferences model
+type Preferences struct {
+	Languages     []enums.Language `json:"languages" db:"languages"`
+	PublicProfile bool             `json:"public_profile" db:"public_profile"`
+}
+
+// Value of preferences (support for embedded preferences)
+func (preferences Preferences) Value() (driver.Value, error) {
+	return json.Marshal(preferences)
+}
+
+// Scan of preferences (support for embedded preferences)
+func (preferences *Preferences) Scan(src interface{}) error {
+	value := reflect.ValueOf(src)
+	if !value.IsValid() || value.IsNil() {
+		return nil
+	}
+
+	if data, ok := src.([]byte); ok {
+		var test []interface{}
+		json.Unmarshal(data, &test)
+		return json.Unmarshal(data, &preferences)
+	}
+
+	return fmt.Errorf("could not not decode type %T -> %T", src, preferences)
 }
 
 // JwtClaims json web token claim
@@ -96,21 +127,21 @@ func (userCollection *UserCollection) Get(id uint64) (*User, error) {
 	user := User{}
 
 	// Get user
-	stmt, err := db.Preparex(`
+	err := db.QueryRowx(`
 		SELECT
 			id,
 			email,
 			display_name,
-			role
+			role,
+			preferences
 		FROM users
 		WHERE
 			id = $1
-	`)
+	`, id).StructScan(&user)
 	if err != nil {
 		return nil, err
 	}
 
-	stmt.Get(&user, id)
 	return &user, nil
 }
 
@@ -147,8 +178,8 @@ func (userCollection *UserCollection) Add(user *User) (uint64, error) {
 
 	query := `
 		INSERT INTO users
-		(email, display_name, password, role)
-		VALUES (:email, :display_name, :password, :role)
+		(email, display_name, password, role, preferences)
+		VALUES (:email, :display_name, :password, :role, :preferences)
 		RETURNING id
 	`
 	rows, err := db.NamedQuery(query, user)
@@ -175,7 +206,8 @@ func (userCollection *UserCollection) Update(user *User) error {
 		SET
 			email = :email,
 			display_name = :display_name,
-			role = :role
+			role = :role,
+			preferences = :preferences
 		WHERE id = :id
 	`
 	result, err := db.NamedExec(query, user)

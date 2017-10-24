@@ -32,4 +32,8 @@ func SetupRouting(e *echo.Echo) {
 	routesLogs.PUT("/:id", echo.HandlerFunc(controllers.APILogsUpdate))
 	routesLogs.DELETE("/:id", echo.HandlerFunc(controllers.APILogsDelete))
 
+	routesUser := routesAPI.Group("/user")
+	routesUser.Use(authenticated)
+	routesUser.GET("/:id", echo.HandlerFunc(controllers.APIUserGetByID))
+	routesUser.PUT("/:id", echo.HandlerFunc(controllers.APIUserUpdate))
 }
