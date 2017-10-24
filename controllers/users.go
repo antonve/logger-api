@@ -83,7 +83,6 @@ func APIUserUpdate(context echo.Context) error {
 
 	// Update
 	userCollection := models.UserCollection{}
-	fmt.Println(user)
 	err = userCollection.Update(user)
 	if err != nil {
 		return ServeWithError(context, 500, err)

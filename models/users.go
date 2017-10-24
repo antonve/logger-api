@@ -42,7 +42,7 @@ func (preferences Preferences) Value() (driver.Value, error) {
 }
 
 // Scan of preferences (support for embedded preferences)
-func (preferences Preferences) Scan(src interface{}) error {
+func (preferences *Preferences) Scan(src interface{}) error {
 	value := reflect.ValueOf(src)
 	if !value.IsValid() || value.IsNil() {
 		return nil
@@ -51,7 +51,6 @@ func (preferences Preferences) Scan(src interface{}) error {
 	if data, ok := src.([]byte); ok {
 		var test []interface{}
 		json.Unmarshal(data, &test)
-		fmt.Println(test)
 		return json.Unmarshal(data, &preferences)
 	}
 
@@ -128,7 +127,7 @@ func (userCollection *UserCollection) Get(id uint64) (*User, error) {
 	user := User{}
 
 	// Get user
-	stmt, err := db.Preparex(`
+	err := db.QueryRowx(`
 		SELECT
 			id,
 			email,
@@ -138,12 +137,11 @@ func (userCollection *UserCollection) Get(id uint64) (*User, error) {
 		FROM users
 		WHERE
 			id = $1
-	`)
+	`, id).StructScan(&user)
 	if err != nil {
 		return nil, err
 	}
 
-	stmt.Get(&user, id)
 	return &user, nil
 }
 
