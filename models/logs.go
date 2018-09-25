@@ -182,6 +182,7 @@ func (logCollection *LogCollection) GetAllWithFilters(filters map[string]interfa
 	`
 
 	rows, err := db.NamedQuery(query, filters)
+	defer rows.Close()
 
 	if err != nil {
 		return err
@@ -247,6 +248,7 @@ func (logCollection *LogCollection) Add(log *Log) (uint64, error) {
 		RETURNING id
 	`
 	rows, err := db.NamedQuery(query, log)
+	defer rows.Close()
 
 	if err != nil {
 		return 0, err
