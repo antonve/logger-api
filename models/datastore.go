@@ -10,6 +10,9 @@ import (
 	"github.com/antonve/logger-api/config"
 )
 
+const maxOpenConns = 8
+const maxIdleConns = 8
+
 var sqlxDB *sqlx.DB
 var sqlDB *sql.DB
 var sqlxConnection *sqlx.DB
@@ -28,6 +31,9 @@ func GetDatabase() *sqlx.DB {
 		return nil
 	}
 
+	sqlxDB.SetMaxOpenConns(maxOpenConns)
+	sqlxDB.SetMaxIdleConns(maxIdleConns)
+
 	return sqlxDB
 }
 
@@ -43,6 +49,9 @@ func GetSQLDatabase() *sql.DB {
 
 		return nil
 	}
+
+	sqlDB.SetMaxOpenConns(maxOpenConns)
+	sqlDB.SetMaxIdleConns(maxIdleConns)
 
 	return sqlDB
 }
@@ -60,6 +69,9 @@ func GetConnection() *sqlx.DB {
 		return nil
 	}
 
+	sqlxConnection.SetMaxOpenConns(maxOpenConns)
+	sqlxConnection.SetMaxIdleConns(maxIdleConns)
+
 	return sqlxConnection
 }
 
@@ -75,6 +87,9 @@ func GetSQLConnection() *sql.DB {
 
 		return nil
 	}
+
+	sqlConnection.SetMaxOpenConns(maxOpenConns)
+	sqlConnection.SetMaxIdleConns(maxIdleConns)
 
 	return sqlConnection
 }
