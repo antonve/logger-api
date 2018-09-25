@@ -183,6 +183,7 @@ func (userCollection *UserCollection) Add(user *User) (uint64, error) {
 		RETURNING id
 	`
 	rows, err := db.NamedQuery(query, user)
+	defer rows.Close()
 
 	if err != nil {
 		return 0, err
